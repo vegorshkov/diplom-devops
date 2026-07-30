@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infra — Карта инфраструктуры</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Infra Dashboard</h1>
+        <div id="status-bar">
+            <span id="connection-status">Отключено</span>
+            <span id="last-update"></span>
+        </div>
+    </header>
+    <main>
+        <canvas id="infra-canvas"></canvas>
+    </main>
+    <footer>
+        <div id="legend">
+            <span class="legend-item"><span class="dot green"></span> OK</span>
+            <span class="legend-item"><span class="dot yellow"></span> Деградация</span>
+            <span class="legend-item"><span class="dot red"></span> Ошибка</span>
+            <span class="legend-item"><span class="dot gray"></span> Нет данных</span>
+        </div>
+        <button id="refresh-btn">Обновить</button>
+    </footer>
+    <script src="app.js"></script>
+</body>
+</html>
