@@ -213,4 +213,11 @@ terraform init -backend-config="access_key=$(jq -r .access_key ../authorized_key
                -backend-config="secret_key=$(jq -r .secret_key ../authorized_key_terraform_state.json)"
 ```
 
+Производим проверки
+cd /home/vgorshkov/STUDENT1/PROJECT/diplom-devops/terraform_state
+terraform init
+terraform validate
+
+![alt text](image-1.png)
+
 
