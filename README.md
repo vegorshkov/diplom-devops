@@ -174,3 +174,43 @@ GitLab Server — выключать (~800 руб/мес экономии)
 
 
 
+diplom-devops/
+├── authorized_key.json                        # Основной СА (для ресурсов)
+├── authorized_key_terraform_state.json        # Новый СА (только для S3)
+├── terraform_state/
+│   └── main.tf                                # Создаёт СА + бакет
+└── terraform_infra/
+    └── backend.tf                             # Использует authorized_key_terraform_state.json
+
+
+# 1. Применяем terraform_state
+cd terraform_state/
+terraform apply
+
+# 2. Сохраняем output в JSON-файл
+terraform output -json terraform_state_key_file > ../authorized_key_terraform_state.json
+
+# 3. Используем в terraform_infra
+cd ../terraform_infra/
+terraform init -backend-config="access_key=$(jq -r .access_key ../authorized_key_terraform_state.json)" \
+               -backend-config="secret_key=$(jq -r .secret_key ../authorized_key_terraform_state.json)"
+
+
+
+
+Инструкция по использованию (для диплома):
+```
+# 1. Применяем terraform_state
+cd terraform_state/
+terraform apply
+
+# 2. Сохраняем output в JSON-файл
+terraform output -json terraform_state_key_file > ../authorized_key_terraform_state.json
+
+# 3. Используем в terraform_infra
+cd ../terraform_infra/
+terraform init -backend-config="access_key=$(jq -r .access_key ../authorized_key_terraform_state.json)" \
+               -backend-config="secret_key=$(jq -r .secret_key ../authorized_key_terraform_state.json)"
+```
+
+
