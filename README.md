@@ -221,3 +221,60 @@ terraform validate
 ![alt text](image-1.png)
 
 
+Выполняем проверку Инфры в локально
+![alt text](image-2.png)
+
+Выполняем проверку terraform-state
+![alt text](image-3.png)
+![alt text](image-4.png)
+
+Проверяем ключи
+![alt text](image-5.png)
+
+Тераформ план прошел, яндекс cloud API доступен, должны быть созданы ресурсы:
+
+1. Сервисный аккаунт terraform-state-sa
+2. Статический ключ доступа
+3. Роль storage.admin
+4. S3-minio бакет terraform-state
+
+Запускаем создание 
+![alt text](image-6.png)
+![alt text](image-7.png)
+
+Сервисный аккаунт terraform-state-sa создан (aje1an77bngre1qdfa8g)
+Статический ключ создан (ajeorc20mbsskl76mlhs)
+
+Так как я запускал из под другого сервисного аккаунта terraform-sa, то у него не хватило прав
+![alt text](image-9.png)
+![alt text](image-8.png)
+
+Корректируем. Добавим роль iam.admin для сервисного аккаунта под которым создается аккаунт для Terraform State   
+
+Матрица прав доступа:
+admin      -	Полный доступ ко всем ресурсам и управление доступом
+iam.admin  -	Управление доступом (не может создавать ВМ, бакеты)
+editor	   -    Создание и изменение ресурсов, он не может назначать роли
+
+![IAM admin на УЗ](image-10.png)
+![IAM admin на Каталог](image-11.png)
+
+Бакет создаётся от имени terraform-sa (у которого storage.admin назначен ранее), и сгенерированы ключи для terraform-state-sa
+
+![Бакет создан](image-12.png)
+
+Итоговые права доступа:
+![alt text](image-13.png)
+
+После выполнения сохраняем ключи в локальные переменные системы, согласно рекомендаций best-practice terraform и yandex cloud  https://yandex.cloud/en/docs/tutorials/infrastructure-management/terraform-state-storage#linux_1
+
+![Безопасная передача ключей в RAM](image-14.png)
+
+Проведен краткий анализ используемого нами метода передачи ключей, в сравнении с рекомендациями Yandex, сохранен: [text](<Сравнение метода безопасного хранения токенов.ods>)
+![Таблица 1](image-15.png)
+
+Официальная инструкция передаёт ключи через -backend-config, что может сохранить их в .terraform/ и plan-файлах.
+
+Наша схема использует стандартные переменные окружения AWS_ACCESS_KEY_ID и AWS_SECRET_ACCESS_KEY, которые S3 backend читает автоматически — это рекомендация HashiCorp для безопасной работы.
+
+
