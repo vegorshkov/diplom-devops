@@ -36,7 +36,7 @@ output "gitlab_ip" {
 # ===== VPC Info =====
 output "vpc_info" {
   value = {
-    network_id = yandex_vpc_network.diplo_vpc.id
+    network_id = yandex_vpc_network.diplom_vpc.id
     subnets    = [for s in yandex_vpc_subnet.k8s_subnet : s.id]
   }
   description = "Информация о VPC"

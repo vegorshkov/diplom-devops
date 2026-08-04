@@ -4,8 +4,8 @@ data "yandex_compute_image" "ubuntu" {
 }
 
 # ===== VPC =====
-resource "yandex_vpc_network" "diplo_vpc" {
-  name        = var.vpc_name
+resource "yandex_vpc_network" "diplom_vpc" {
+  name        = "diplom-vpc"
   description = "VPC for diplom infrastructure"
 }
 
@@ -14,7 +14,7 @@ resource "yandex_vpc_subnet" "k8s_subnet" {
   for_each       = var.k8s_subnet_cidrs
   name           = "k8s-subnet-${each.key}"
   zone           = each.key
-  network_id     = yandex_vpc_network.diplo_vpc.id
+  network_id     = yandex_vpc_network.diplom_vpc.id
   v4_cidr_blocks = each.value
   description    = "K8s subnet in ${each.key}"
 }
@@ -55,7 +55,7 @@ resource "yandex_compute_instance" "nat_instance" {
   }
 }
 
-# ===== K8s Master Nodes (по одному в каждой зоне) =====
+# ===== K8s Master Nodes =====
 resource "yandex_compute_instance" "k8s_master" {
   for_each    = var.k8s_master_ips
   name        = "k8s-master-${each.key}"
@@ -92,7 +92,7 @@ resource "yandex_compute_instance" "k8s_master" {
   }
 }
 
-# ===== K8s Worker Nodes (по одному в каждой зоне) =====
+# ===== K8s Worker Nodes =====
 resource "yandex_compute_instance" "k8s_worker" {
   for_each    = var.k8s_worker_ips
   name        = "k8s-worker-${each.key}"
@@ -129,7 +129,7 @@ resource "yandex_compute_instance" "k8s_worker" {
   }
 }
 
-# ===== GitLab Server (зона b) =====
+# ===== GitLab Server =====
 resource "yandex_compute_instance" "gitlab" {
   name        = "gitlab-server"
   hostname    = "gitlab-server"

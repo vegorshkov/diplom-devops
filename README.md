@@ -278,3 +278,41 @@ editor	   -    Создание и изменение ресурсов, он н�
 Наша схема использует стандартные переменные окружения AWS_ACCESS_KEY_ID и AWS_SECRET_ACCESS_KEY, которые S3 backend читает автоматически — это рекомендация HashiCorp для безопасной работы.
 
 
+Переходим к созданию Infra-окружения
+![Инфраструктура](image-16.png)
+
+![alt text](image-17.png)
+![alt text](image-18.png)
+![alt text](image-19.png)
+![alt text](image-20.png)
+![alt text](image-21.png)
+![alt text](image-22.png)
+![alt text](image-23.png)
+![alt text](image-24.png)
+![alt text](image-25.png)
+![alt text](image-26.png)
+![alt text](image-27.png)
+![alt text](image-28.png)
+![alt text](image-29.png)
+![alt text](image-30.png)
+![alt text](image-31.png)
+![alt text](image-32.png)
+
+Зафиксируем первоначальное состояние бакета с терраформ состоянием:
+![alt text](image-33.png)
+
+Применим конфигурацию:
+![alt text](image-36.png)
+![alt text](image-37.png)
+![alt text](image-38.png)
+
+Машины созданы:
+![Консоль Яндекса](image-35.png)
+
+Локальный ~/.ssh/config скорректирован
+![Подключение по ssh](image-34.png)
+
+Outputs:
+![Infrastructure](image-39.png)
+
+
