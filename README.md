@@ -315,4 +315,15 @@ editor	   -    Создание и изменение ресурсов, он н�
 Outputs:
 ![Infrastructure](image-39.png)
 
+Инфраструктура развертнута
+
+
+Переходим на "Kubernetes через Kubespray"
+![KubeSpray](image-41.png)
+
+Склонировали из github Kubespray и поправили файл inventory согласно нашего конфига
+![Kubespray_inventory](image-40.png)
+
+Проверяем связь с хостами через Ansible:
+![Success](image-42.png)
 
