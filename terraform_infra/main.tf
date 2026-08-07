@@ -9,6 +9,17 @@ resource "yandex_vpc_network" "diplom_vpc" {
   description = "VPC for diplom infrastructure"
 }
 
+# ===== Route Table =====
+resource "yandex_vpc_route_table" "nat_route" {
+  name       = "nat-route"
+  network_id = yandex_vpc_network.diplom_vpc.id
+
+  static_route {
+    destination_prefix = "0.0.0.0/0"
+    next_hop_address   = "172.16.2.254"
+  }
+}
+
 # ===== Подсети в трёх зонах =====
 resource "yandex_vpc_subnet" "k8s_subnet" {
   for_each       = var.k8s_subnet_cidrs
@@ -16,10 +27,11 @@ resource "yandex_vpc_subnet" "k8s_subnet" {
   zone           = each.key
   network_id     = yandex_vpc_network.diplom_vpc.id
   v4_cidr_blocks = each.value
+  route_table_id = yandex_vpc_route_table.nat_route.id
   description    = "K8s subnet in ${each.key}"
 }
 
-# ===== NAT Instance (зона b) =====
+# ===== NAT Instance =====
 resource "yandex_compute_instance" "nat_instance" {
   name        = "nat-instance"
   hostname    = "nat-instance"

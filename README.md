@@ -327,3 +327,156 @@ Outputs:
 Проверяем связь с хостами через Ansible:
 ![Success](image-42.png)
 
+Установим модули kubespray
+![alt text](image-43.png)
+
+Блок команд:
+```
+set -euo pipefail
+
+if [ -z "${VIRTUAL_ENV:-}" ]; then
+    echo "Ошибка: виртуальное окружение не активировано."
+    exit 1
+fi
+
+if [ ! -f requirements.txt ]; then
+    echo "Ошибка: requirements.txt не найден. Перейдите в корневой каталог kubespray."
+    exit 1
+fi
+
+PROXY_URL="socks5h://127.0.0.1:7777"
+PYSOCKS_METADATA="/tmp/pysocks-pypi.json"
+
+echo "Проверка SOCKS5-прокси"
+
+curl \
+    --fail \
+    --show-error \
+    --silent \
+    --proxy "${PROXY_URL}" \
+    --output /dev/null \
+    https://pypi.org/simple/
+
+echo "Получение метаданных PySocks"
+
+curl \
+    --fail \
+    --show-error \
+    --silent \
+    --proxy "${PROXY_URL}" \
+    --output "${PYSOCKS_METADATA}" \
+    https://pypi.org/pypi/PySocks/json
+
+PYSOCKS_WHEEL_URL="$(
+    "${VIRTUAL_ENV}/bin/python" - "${PYSOCKS_METADATA}" <<'PY'
+import json
+import sys
+
+metadata_file = sys.argv[1]
+
+with open(metadata_file, encoding="utf-8") as file:
+    metadata = json.load(file)
+
+wheels = [
+    item
+    for item in metadata["urls"]
+    if item["packagetype"] == "bdist_wheel"
+    and item["filename"].endswith("py3-none-any.whl")
+]
+
+if not wheels:
+    raise SystemExit("Подходящий wheel-файл PySocks не найден")
+
+print(wheels[0]["url"])
+PY
+)"
+
+PYSOCKS_WHEEL_NAME="${PYSOCKS_WHEEL_URL##*/}"
+PYSOCKS_WHEEL_PATH="/tmp/${PYSOCKS_WHEEL_NAME}"
+
+echo "Загрузка ${PYSOCKS_WHEEL_NAME}"
+
+curl \
+    --fail \
+    --show-error \
+    --location \
+    --proxy "${PROXY_URL}" \
+    --output "${PYSOCKS_WHEEL_PATH}" \
+    "${PYSOCKS_WHEEL_URL}"
+
+echo "Локальная установка PySocks"
+
+"${VIRTUAL_ENV}/bin/python" -m pip install \
+    --no-index \
+    --no-deps \
+    "${PYSOCKS_WHEEL_PATH}"
+
+"${VIRTUAL_ENV}/bin/python" -c \
+    'import socks; print("PySocks установлен:", socks.__version__)'
+
+export ALL_PROXY="${PROXY_URL}"
+export HTTPS_PROXY="${PROXY_URL}"
+export HTTP_PROXY="${PROXY_URL}"
+
+export all_proxy="${ALL_PROXY}"
+export https_proxy="${HTTPS_PROXY}"
+export http_proxy="${HTTP_PROXY}"
+
+export NO_PROXY="${NO_PROXY:+${NO_PROXY},}127.0.0.1,localhost,::1"
+export no_proxy="${NO_PROXY}"
+
+echo "Установка зависимостей Kubespray"
+
+"${VIRTUAL_ENV}/bin/python" -m pip install \
+    --proxy "${PROXY_URL}" \
+    --disable-pip-version-check \
+    --requirement requirements.txt
+
+if [ -f requirements.yml ]; then
+    echo "Установка Ansible Collections"
+
+    "${VIRTUAL_ENV}/bin/ansible-galaxy" collection install \
+        --requirements-file requirements.yml
+fi
+
+echo "Проверка зависимостей Python"
+
+"${VIRTUAL_ENV}/bin/python" -m pip check
+
+echo "Проверка Ansible"
+
+"${VIRTUAL_ENV}/bin/ansible" --version
+
+echo "Проверка коллекции ansible.utils"
+
+"${VIRTUAL_ENV}/bin/ansible-galaxy" collection list ansible.utils
+
+echo "Проверка модуля ansible.utils.validate"
+
+"${VIRTUAL_ENV}/bin/ansible-doc" \
+    --type module \
+    ansible.utils.validate \
+    >/dev/null
+
+echo "Синтаксическая проверка Kubespray"
+
+"${VIRTUAL_ENV}/bin/ansible-playbook" \
+    cluster.yml \
+    --syntax-check
+
+echo "Проверка завершена успешно"
+```
+
+Запускаем развертывание:
+![alt text](image-44.png)
+![alt text](image-45.png)
+![alt text](image-46.png)
+![alt text](image-47.png)
+![alt text](image-48.png)
+![alt text](image-49.png)
+
+Провожу проверку/разбор ошибок.
+Добавлен sudo доступ при выполнения команд
+![alt text](image-50.png)
+![alt text](image-51.png)
+
