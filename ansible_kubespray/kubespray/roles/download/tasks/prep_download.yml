@@ -84,6 +84,7 @@
   delegate_facts: false
   run_once: true
   become: false
-  when: download_force_cache or download_run_once
+  when:
+    - download_force_cache
   tags:
     - localhost

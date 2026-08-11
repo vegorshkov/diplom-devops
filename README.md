@@ -480,3 +480,26 @@ echo "Проверка завершена успешно"
 ![alt text](image-50.png)
 ![alt text](image-51.png)
 
+![Проверка перед установкой](image-52.png)
+Проверки пройдены полностью. Установка управляющих зависимостей завершена.
+
+Запускаем повторно:
+![alt text](image-53.png)
+![alt text](image-54.png)
+![alt text](image-55.png)
+![alt text](image-56.png)
+![alt text](image-57.png)
+![alt text](image-58.png)
+![alt text](image-59.png)
+![alt text](image-60.png)
+![alt text](image-61.png)
+![alt text](image-62.png)
+![alt text](image-63.png)
+
+Дозапускаем для двух отвалившихся нод.
+Ansible идемпотентен - это свойство Ansible и его модулей, при котором многократное выполнение одной и той же задачи приводит к одному и тому же результату, не вызывая повторных изменений в системе.
+
+
+
+
+

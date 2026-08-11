@@ -1,37 +1,52 @@
-# ===== Data Sources =====
 data "yandex_compute_image" "ubuntu" {
   family = var.vm_image_family
 }
 
-# ===== VPC =====
 resource "yandex_vpc_network" "diplom_vpc" {
   name        = "diplom-vpc"
   description = "VPC for diplom infrastructure"
 }
 
-# ===== Route Table =====
-resource "yandex_vpc_route_table" "nat_route" {
-  name       = "nat-route"
-  network_id = yandex_vpc_network.diplom_vpc.id
-
-  static_route {
-    destination_prefix = "0.0.0.0/0"
-    next_hop_address   = "172.16.2.254"
-  }
-}
-
-# ===== Подсети в трёх зонах =====
 resource "yandex_vpc_subnet" "k8s_subnet" {
   for_each       = var.k8s_subnet_cidrs
   name           = "k8s-subnet-${each.key}"
   zone           = each.key
   network_id     = yandex_vpc_network.diplom_vpc.id
   v4_cidr_blocks = each.value
-  route_table_id = yandex_vpc_route_table.nat_route.id
   description    = "K8s subnet in ${each.key}"
 }
 
-# ===== NAT Instance =====
+resource "yandex_vpc_security_group" "k8s_sg" {
+  name        = "k8s-security-group"
+  network_id  = yandex_vpc_network.diplom_vpc.id
+  description = "Security group for K8s cluster"
+
+  ingress {
+    protocol       = "TCP"
+    description    = "SSH"
+    port           = 22
+    v4_cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    protocol       = "TCP"
+    description    = "K8s API"
+    port           = 6443
+    v4_cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    protocol       = "TCP"
+    description    = "HTTP/HTTPS"
+    from_port      = 80
+    to_port        = 443
+    v4_cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    protocol       = "ANY"
+    description    = "Outgoing"
+    v4_cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 resource "yandex_compute_instance" "nat_instance" {
   name        = "nat-instance"
   hostname    = "nat-instance"
@@ -43,7 +58,6 @@ resource "yandex_compute_instance" "nat_instance" {
     memory        = 2
     core_fraction = 20
   }
-
   boot_disk {
     initialize_params {
       image_id = var.nat_image_id
@@ -51,23 +65,20 @@ resource "yandex_compute_instance" "nat_instance" {
       type     = "network-hdd"
     }
   }
-
   network_interface {
-    subnet_id  = yandex_vpc_subnet.k8s_subnet["ru-central1-b"].id
-    ip_address = "172.16.2.254"
-    nat        = true
+    subnet_id          = yandex_vpc_subnet.k8s_subnet["ru-central1-b"].id
+    nat                = true
+    security_group_ids = [yandex_vpc_security_group.k8s_sg.id]
   }
-
   metadata = {
     ssh-keys = "ubuntu:${file(var.ssh_public_key)}"
   }
-
   scheduling_policy {
     preemptible = false
   }
+  allow_stopping_for_update = true
 }
 
-# ===== K8s Master Nodes =====
 resource "yandex_compute_instance" "k8s_master" {
   for_each    = var.k8s_master_ips
   name        = "k8s-master-${each.key}"
@@ -80,7 +91,6 @@ resource "yandex_compute_instance" "k8s_master" {
     memory        = 4
     core_fraction = 50
   }
-
   boot_disk {
     initialize_params {
       image_id = data.yandex_compute_image.ubuntu.image_id
@@ -88,36 +98,32 @@ resource "yandex_compute_instance" "k8s_master" {
       type     = "network-ssd"
     }
   }
-
   network_interface {
-    subnet_id  = yandex_vpc_subnet.k8s_subnet[each.key].id
-    ip_address = each.value
-    nat        = false
+    subnet_id          = yandex_vpc_subnet.k8s_subnet[each.key].id
+    ip_address         = each.value
+    nat                = false
+    security_group_ids = [yandex_vpc_security_group.k8s_sg.id]
   }
-
   metadata = {
     ssh-keys = "ubuntu:${file(var.ssh_public_key)}"
   }
-
   scheduling_policy {
     preemptible = false
   }
 }
 
-# ===== K8s Worker Nodes =====
 resource "yandex_compute_instance" "k8s_worker" {
   for_each    = var.k8s_worker_ips
   name        = "k8s-worker-${each.key}"
   hostname    = "k8s-worker-${each.key}"
   platform_id = "standard-v3"
-  zone        = each.key
+  zone        = replace(replace(each.key, "a2", "a"), "d2", "d")
 
   resources {
     cores         = 2
     memory        = 2
     core_fraction = 20
   }
-
   boot_disk {
     initialize_params {
       image_id = data.yandex_compute_image.ubuntu.image_id
@@ -125,23 +131,20 @@ resource "yandex_compute_instance" "k8s_worker" {
       type     = "network-ssd"
     }
   }
-
   network_interface {
-    subnet_id  = yandex_vpc_subnet.k8s_subnet[each.key].id
-    ip_address = each.value
-    nat        = false
+    subnet_id          = yandex_vpc_subnet.k8s_subnet[replace(replace(each.key, "a2", "a"), "d2", "d")].id
+    ip_address         = each.value
+    nat                = false
+    security_group_ids = [yandex_vpc_security_group.k8s_sg.id]
   }
-
   metadata = {
     ssh-keys = "ubuntu:${file(var.ssh_public_key)}"
   }
-
   scheduling_policy {
     preemptible = true
   }
 }
 
-# ===== GitLab Server =====
 resource "yandex_compute_instance" "gitlab" {
   name        = "gitlab-server"
   hostname    = "gitlab-server"
@@ -153,7 +156,6 @@ resource "yandex_compute_instance" "gitlab" {
     memory        = 8
     core_fraction = 100
   }
-
   boot_disk {
     initialize_params {
       image_id = data.yandex_compute_image.ubuntu.image_id
@@ -161,18 +163,17 @@ resource "yandex_compute_instance" "gitlab" {
       type     = "network-ssd"
     }
   }
-
   network_interface {
-    subnet_id  = yandex_vpc_subnet.k8s_subnet["ru-central1-b"].id
-    ip_address = var.gitlab_ip
-    nat        = false
+    subnet_id          = yandex_vpc_subnet.k8s_subnet["ru-central1-b"].id
+    ip_address         = var.gitlab_ip
+    nat                = false
+    security_group_ids = [yandex_vpc_security_group.k8s_sg.id]
   }
-
   metadata = {
     ssh-keys = "ubuntu:${file(var.ssh_public_key)}"
   }
-
   scheduling_policy {
     preemptible = false
   }
+  allow_stopping_for_update = true
 }

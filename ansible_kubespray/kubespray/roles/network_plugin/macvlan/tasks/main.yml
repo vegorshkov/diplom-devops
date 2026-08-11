@@ -108,4 +108,3 @@
     sysctl_file: "{{ sysctl_file_path }}"
     state: present
     reload: true
-    ignoreerrors: "{{ sysctl_ignore_unknown_keys }}"

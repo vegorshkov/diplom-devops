@@ -1,0 +1,870 @@
+KUBESPRAY_PREFLIGHT_START=2026-08-08T07:26:42+03:00
+PROJECT_DIR=/home/vgorshkov/STUDENT1/PROJECT/diplom-devops
+LOG_FILE=/home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/logs/kubespray-preflight-20260808T042642Z.log
+PERSISTENT_REMOTE_CHANGES=NONE
+
+===== 01_LOCAL_REPOSITORY_AND_KUBESPRAY =====
+REPOSITORY_ROOT=/home/vgorshkov/STUDENT1/PROJECT/diplom-devops
+BRANCH=main
+KUBESPRAY_VERSION=2.31.0
+KUBESPRAY_SOURCE_STATE=CLEAN
+
+===== 02_CONTROLLER_ENVIRONMENT =====
+CONTROLLER_ROOT_FREE_KB=111222420
+CONTROLLER_ROOT_FREE_INODES=7509696
+CONTROLLER_DNS_RESULT=SUCCESS
+PYTHON_PACKAGE_ANSIBLE=11.13.0
+PYTHON_PACKAGE_CRYPTOGRAPHY=46.0.7
+PYTHON_PACKAGE_JMESPATH=1.1.0
+PYTHON_PACKAGE_NETADDR=1.3.0
+ANSIBLE_CORE_VERSION=2.18.18
+No broken requirements found.
+ansible [core 2.18.18]
+  config file = /home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/kubespray/ansible.cfg
+  configured module search path = ['/home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/kubespray/library']
+  ansible python module location = /home/vgorshkov/venv-kubespray-2.31.0/lib/python3.12/site-packages/ansible
+  ansible collection location = /home/vgorshkov/.ansible/collections:/usr/share/ansible/collections
+  executable location = /home/vgorshkov/venv-kubespray-2.31.0/bin/ansible
+  python version = 3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0] (/home/vgorshkov/venv-kubespray-2.31.0/bin/python)
+  jinja version = 3.1.6
+  libyaml = True
+CONTROLLER_ENVIRONMENT_RESULT=SUCCESS
+
+===== 03_INVENTORY_AND_PROJECT_VARIABLES =====
+INVENTORY_HOST_COUNT=6
+CONTROL_PLANE_HOSTS=k8s-master-ru-central1-a,k8s-master-ru-central1-b,k8s-master-ru-central1-d
+ETCD_HOSTS=k8s-master-ru-central1-a,k8s-master-ru-central1-b,k8s-master-ru-central1-d
+WORKER_HOSTS=k8s-worker-ru-central1-a,k8s-worker-ru-central1-b,k8s-worker-ru-central1-d
+KUBE_VERSION=v1.30.4
+KUBE_NETWORK_PLUGIN=calico
+CONTAINER_MANAGER=containerd
+KUBE_SERVICE_ADDRESSES=10.233.0.0/18
+KUBE_PODS_SUBNET=10.233.64.0/18
+KUBE_NETWORK_NODE_PREFIX=24
+DNS_DOMAIN=cluster.local
+KUBE_PROXY_MODE=ipvs
+DNS_MODE=coredns
+ENABLE_NODELOCALDNS=True
+CALICO_NETWORK_BACKEND=vxlan
+CALICO_IPIP_MODE=Never
+CALICO_VXLAN_MODE=Always
+CONTAINERD_USE_SYSTEMD_CGROUP=True
+ETCD_DEPLOYMENT_TYPE=host
+PROXY_CONFIGURATION=NOT_DEFINED_IN_INVENTORY
+INVENTORY_AND_VARIABLES_RESULT=SUCCESS
+@all:
+  |--@ungrouped:
+  |--@kube_control_plane:
+  |  |--k8s-master-ru-central1-a
+  |  |--k8s-master-ru-central1-b
+  |  |--k8s-master-ru-central1-d
+  |--@kube_node:
+  |  |--k8s-worker-ru-central1-a
+  |  |--k8s-worker-ru-central1-b
+  |  |--k8s-worker-ru-central1-d
+  |--@etcd:
+  |  |--k8s-master-ru-central1-a
+  |  |--k8s-master-ru-central1-b
+  |  |--k8s-master-ru-central1-d
+  |--@k8s_cluster:
+  |  |--@kube_control_plane:
+  |  |  |--k8s-master-ru-central1-a
+  |  |  |--k8s-master-ru-central1-b
+  |  |  |--k8s-master-ru-central1-d
+  |  |--@kube_node:
+  |  |  |--k8s-worker-ru-central1-a
+  |  |  |--k8s-worker-ru-central1-b
+  |  |  |--k8s-worker-ru-central1-d
+
+===== 04_SSH_CONFIGURATION_AND_ACCESS =====
+SSH_ACCESS=SUCCESS host=k8s-master-ru-central1-a ip=172.16.1.10 proxyjump=yc-nat-instance
+SSH_ACCESS=SUCCESS host=k8s-master-ru-central1-b ip=172.16.2.10 proxyjump=yc-nat-instance
+SSH_ACCESS=SUCCESS host=k8s-master-ru-central1-d ip=172.16.3.10 proxyjump=yc-nat-instance
+SSH_ACCESS=SUCCESS host=k8s-worker-ru-central1-a ip=172.16.1.21 proxyjump=yc-nat-instance
+SSH_ACCESS=SUCCESS host=k8s-worker-ru-central1-b ip=172.16.2.21 proxyjump=yc-nat-instance
+SSH_ACCESS=SUCCESS host=k8s-worker-ru-central1-d ip=172.16.3.21 proxyjump=yc-nat-instance
+SSH_CONFIGURATION_AND_ACCESS_RESULT=SUCCESS
+
+===== 05_ANSIBLE_SYNTAX_AND_TARGETS =====
+[WARNING]: Could not match supplied host pattern, ignoring: bastion
+[WARNING]: Could not match supplied host pattern, ignoring: calico_rr
+[WARNING]: Could not match supplied host pattern, ignoring:
+_kubespray_needs_etcd
+
+playbook: /home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/kubespray/cluster.yml
+[WARNING]: Could not match supplied host pattern, ignoring: bastion
+[WARNING]: Could not match supplied host pattern, ignoring: calico_rr
+[WARNING]: Could not match supplied host pattern, ignoring:
+_kubespray_needs_etcd
+
+playbook: /home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/kubespray/cluster.yml
+
+  play #1 (all): Check Ansible version	TAGS: [always]
+    pattern: ['all']
+    hosts (6):
+      k8s-worker-ru-central1-d
+      k8s-master-ru-central1-a
+      k8s-worker-ru-central1-a
+      k8s-master-ru-central1-b
+      k8s-master-ru-central1-d
+      k8s-worker-ru-central1-b
+
+  play #2 (all): Inventory setup and validation	TAGS: [always]
+    pattern: ['all']
+    hosts (6):
+      k8s-worker-ru-central1-d
+      k8s-master-ru-central1-a
+      k8s-worker-ru-central1-a
+      k8s-master-ru-central1-b
+      k8s-master-ru-central1-d
+      k8s-worker-ru-central1-b
+
+  play #3 (bastion[0]): Install bastion ssh config	TAGS: []
+    pattern: ['bastion[0]']
+    hosts (0):
+
+  play #4 (k8s_cluster:etcd:calico_rr): Bootstrap hosts for Ansible	TAGS: []
+    pattern: ['k8s_cluster:etcd:calico_rr']
+    hosts (6):
+      k8s-worker-ru-central1-d
+      k8s-master-ru-central1-a
+      k8s-worker-ru-central1-a
+      k8s-master-ru-central1-b
+      k8s-master-ru-central1-d
+      k8s-worker-ru-central1-b
+
+  play #5 (k8s_cluster:etcd:calico_rr): Gather facts	TAGS: [always]
+    pattern: ['k8s_cluster:etcd:calico_rr']
+    hosts (6):
+      k8s-worker-ru-central1-d
+      k8s-master-ru-central1-a
+      k8s-worker-ru-central1-a
+      k8s-master-ru-central1-b
+      k8s-master-ru-central1-d
+      k8s-worker-ru-central1-b
+
+  play #6 (k8s_cluster:etcd): Prepare for etcd install	TAGS: []
+    pattern: ['k8s_cluster:etcd']
+    hosts (6):
+      k8s-worker-ru-central1-d
+      k8s-master-ru-central1-a
+      k8s-worker-ru-central1-a
+      k8s-master-ru-central1-b
+      k8s-master-ru-central1-d
+      k8s-worker-ru-central1-b
+
+  play #7 (kube_node): Add worker nodes to the etcd play if needed	TAGS: []
+    pattern: ['kube_node']
+    hosts (3):
+      k8s-worker-ru-central1-a
+      k8s-worker-ru-central1-d
+      k8s-worker-ru-central1-b
+
+  play #8 (etcd:kube_control_plane:_kubespray_needs_etcd): Install etcd	TAGS: []
+    pattern: ['etcd:kube_control_plane:_kubespray_needs_etcd']
+    hosts (3):
+      k8s-master-ru-central1-d
+      k8s-master-ru-central1-b
+      k8s-master-ru-central1-a
+
+  play #9 (k8s_cluster): Install Kubernetes nodes	TAGS: []
+    pattern: ['k8s_cluster']
+    hosts (6):
+      k8s-worker-ru-central1-d
+      k8s-master-ru-central1-a
+      k8s-worker-ru-central1-a
+      k8s-master-ru-central1-b
+      k8s-master-ru-central1-d
+      k8s-worker-ru-central1-b
+
+  play #10 (kube_control_plane): Install the control plane	TAGS: []
+    pattern: ['kube_control_plane']
+    hosts (3):
+      k8s-master-ru-central1-d
+      k8s-master-ru-central1-b
+      k8s-master-ru-central1-a
+
+  play #11 (k8s_cluster): Invoke kubeadm and install a CNI	TAGS: []
+    pattern: ['k8s_cluster']
+    hosts (6):
+      k8s-worker-ru-central1-d
+      k8s-master-ru-central1-a
+      k8s-worker-ru-central1-a
+      k8s-master-ru-central1-b
+      k8s-master-ru-central1-d
+      k8s-worker-ru-central1-b
+
+  play #12 (calico_rr): Install Calico Route Reflector	TAGS: []
+    pattern: ['calico_rr']
+    hosts (0):
+
+  play #13 (kube_control_plane[0]): Patch Kubernetes for Windows	TAGS: []
+    pattern: ['kube_control_plane[0]']
+    hosts (1):
+      k8s-master-ru-central1-a
+
+  play #14 (kube_control_plane): Install Kubernetes apps	TAGS: []
+    pattern: ['kube_control_plane']
+    hosts (3):
+      k8s-master-ru-central1-d
+      k8s-master-ru-central1-b
+      k8s-master-ru-central1-a
+
+  play #15 (k8s_cluster): Apply resolv.conf changes now that cluster DNS is up	TAGS: []
+    pattern: ['k8s_cluster']
+    hosts (6):
+      k8s-worker-ru-central1-d
+      k8s-master-ru-central1-a
+      k8s-worker-ru-central1-a
+      k8s-master-ru-central1-b
+      k8s-master-ru-central1-d
+      k8s-worker-ru-central1-b
+KUBESPRAY_PLAYBOOK_STATIC_VALIDATION_RESULT=SUCCESS
+
+===== 06_REMOTE_READ_ONLY_AUDIT =====
+ERROR! failed at splitting arguments, either an unbalanced jinja2 block or quotes: set -Eeuo pipefail
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+
+errors=()
+warnings=()
+
+add_error()
+{
+    errors+=("$1")
+}
+
+add_warning()
+{
+    warnings+=("$1")
+}
+
+root_free_kb="$(df -Pk / | awk 'NR == 2 { print $4 }')"
+root_free_inodes="$(df -Pi / | awk 'NR == 2 { print $4 }')"
+root_inode_use="$(df -Pi / | awk 'NR == 2 { gsub(/%/, "", $5); print $5 }')"
+
+(( root_free_kb >= 10485760 )) || add_error "ROOT_FREE_SPACE_LT_10_GIB"
+(( root_free_inodes >= 100000 )) || add_error "ROOT_FREE_INODES_LT_100000"
+(( root_inode_use < 90 )) || add_error "ROOT_INODE_USAGE_GE_90_PERCENT"
+
+active_swap="$(swapon --noheadings --show=NAME 2>/dev/null || true)"
+[[ -z "${active_swap}" ]] || add_error "SWAP_ACTIVE"
+
+ipv4_forward="$(sysctl -n net.ipv4.ip_forward 2>/dev/null || true)"
+[[ "${ipv4_forward}" == "1" ]] || add_error "IPV4_FORWARDING_DISABLED"
+
+ntp_state="$(timedatectl show --property=NTPSynchronized --value 2>/dev/null || true)"
+[[ "${ntp_state}" == "yes" ]] || add_error "TIME_NOT_SYNCHRONIZED"
+
+if command -v cloud-init >/dev/null 2>&1
+then
+    cloud_init_state="$(cloud-init status 2>/dev/null | awk '{ print $2; exit }')"
+    [[ "${cloud_init_state}" == "done" ]] || add_error "CLOUD_INIT_NOT_DONE"
+else
+    cloud_init_state="NOT_INSTALLED"
+fi
+
+[[ ! -e /var/run/reboot-required ]] || add_error "REBOOT_REQUIRED"
+
+dpkg_audit="$(dpkg --audit 2>&1 || true)"
+[[ -z "${dpkg_audit}" ]] || add_error "DPKG_AUDIT_NOT_CLEAN"
+
+if command -v ufw >/dev/null 2>&1
+then
+    ufw_state="$(ufw status 2>/dev/null | head -n 1 || true)"
+    grep -Fqi 'inactive' <<< "${ufw_state}" || add_error "UFW_ACTIVE"
+else
+    ufw_state="NOT_INSTALLED"
+fi
+
+if systemctl list-unit-files firewalld.service >/dev/null 2>&1
+then
+    firewalld_state="$(systemctl is-active firewalld 2>/dev/null || true)"
+    [[ "${firewalld_state}" != "active" ]] || add_error "FIREWALLD_ACTIVE"
+else
+    firewalld_state="NOT_INSTALLED"
+fi
+
+if command -v iptables-save >/dev/null 2>&1
+then
+    filter_policies="$(iptables-save -t filter 2>/dev/null | awk '$1 ~ /^:/ { print $1, $2 }')"
+    grep -Eq '^:INPUT DROP$|^:FORWARD DROP$' <<< "${filter_policies}" &&
+        add_error "IPTABLES_DEFAULT_DROP_POLICY" || true
+
+    if iptables-save 2>/dev/null | grep -Eq '(^|[[:space:]])(KUBE-|cali-|CNI-|FLANNEL)'
+    then
+        add_error "KUBERNETES_OR_CNI_IPTABLES_RESIDUE"
+    fi
+fi
+
+for module in overlay br_netfilter nf_conntrack ip_vs ip_vs_rr ip_vs_wrr ip_vs_sh
+do
+    modinfo "${module}" >/dev/null 2>&1 || add_error "KERNEL_MODULE_UNAVAILABLE_${module}"
+done
+
+for service in kubelet etcd
+do
+    if systemctl is-active --quiet "${service}" 2>/dev/null ||
+       systemctl is-enabled --quiet "${service}" 2>/dev/null
+    then
+        add_error "STALE_SERVICE_${service}"
+    fi
+done
+
+for package_name in kubeadm kubelet kubectl kubernetes-cni
+do
+    package_state="$(dpkg-query -W -f='${db:Status-Abbrev}' "${package_name}" 2>/dev/null || true)"
+    [[ "${package_state}" != "ii " ]] || add_error "STALE_PACKAGE_${package_name}"
+done
+
+for binary in kubeadm kubelet kubectl
+do
+    command -v "${binary}" >/dev/null 2>&1 && add_error "STALE_BINARY_${binary}" || true
+done
+
+for directory in \
+    /etc/kubernetes \
+    /var/lib/kubelet \
+    /var/lib/etcd \
+    /etc/cni/net.d \
+    /var/lib/cni \
+    /opt/cni/bin
+do
+    if [[ -d "${directory}" ]] &&
+       find "${directory}" -mindepth 1 -print -quit 2>/dev/null | grep -q .
+    then
+        add_error "STALE_DIRECTORY_${directory//\//_}"
+    fi
+done
+
+if ip -o link show 2>/dev/null |
+    grep -Eq '^[0-9]+: (cni0|flannel\.|cali|tunl0|vxlan\.calico|kube-ipvs0)'
+then
+    add_error "STALE_KUBERNETES_NETWORK_INTERFACE"
+fi
+
+if ip -4 route show 2>/dev/null |
+    grep -Eq '(^|[[:space:]])10\.233\.(0|[1-9]|[1-9][0-9]|1[01][0-9]|12[0-7])\.'
+then
+    add_error "STALE_KUBERNETES_ROUTE"
+fi
+
+role_ports=(10250)
+if [[ "{{ inventory_hostname }}" == k8s-master-* ]]
+then
+    role_ports+=(2379 2380 6443 10257 10259)
+else
+    role_ports+=(10256)
+fi
+
+listening_sockets="$(ss -H -lntup 2>/dev/null || true)"
+for port in "${role_ports[@]}"
+do
+    if awk -v port=":${port}" '$5 ~ port "$" { found=1 } END { exit(found ? 0 : 1) }' \
+        <<< "${listening_sockets}"
+    then
+        add_error "REQUIRED_PORT_ALREADY_IN_USE_${port}"
+    fi
+done
+
+default_route_count="$(ip -4 route show default | awk 'END { print NR + 0 }')"
+(( default_route_count >= 1 )) || add_error "DEFAULT_ROUTE_MISSING"
+
+route_overlap="$({
+    ip -4 route show |
+        awk '$1 != "default" && $1 ~ /^[0-9]+\./ { print $1 }' |
+        python3 -c '
+import ipaddress
+import sys
+
+service = ipaddress.ip_network("10.233.0.0/18")
+pods = ipaddress.ip_network("10.233.64.0/18")
+
+for text in sys.stdin:
+    text = text.strip()
+    if not text:
+        continue
+    try:
+        route = ipaddress.ip_network(text, strict=False)
+    except ValueError:
+        continue
+    if route.overlaps(service) or route.overlaps(pods):
+        print(route)
+' || true
+})"
+[[ -z "${route_overlap}" ]] || add_error "POD_OR_SERVICE_NETWORK_ROUTE_OVERLAP"
+
+for peer_ip in \
+    172.16.1.10 172.16.2.10 172.16.3.10 \
+    172.16.1.21 172.16.2.21 172.16.3.21
+do
+    timeout 5 bash -c "exec 3<>/dev/tcp/${peer_ip}/22" 2>/dev/null ||
+        add_error "PEER_SSH_UNREACHABLE_${peer_ip}"
+done
+
+for dns_name in \
+    mirror.yandex.ru \
+    dl.k8s.io \
+    registry.k8s.io \
+    quay.io \
+    registry-1.docker.io \
+    github.com \
+    ghcr.io
+do
+    getent ahostsv4 "${dns_name}" >/dev/null 2>&1 ||
+        add_error "DNS_RESOLUTION_FAILED_${dns_name}"
+done
+
+apt_temp="$(mktemp -d /tmp/kubespray-apt-preflight.XXXXXX)"
+cleanup_apt_temp()
+{
+    rm -rf -- "${apt_temp}"
+}
+trap cleanup_apt_temp EXIT
+
+mkdir -p -- \
+    "${apt_temp}/lists/partial" \
+    "${apt_temp}/cache/archives/partial"
+chmod 755 -- "${apt_temp}" "${apt_temp}/lists" "${apt_temp}/lists/partial"
+
+apt_options=(
+    -o "Dir::State::lists=${apt_temp}/lists"
+    -o "Dir::Cache=${apt_temp}/cache"
+    -o Acquire::Retries=2
+    -o Acquire::http::Timeout=30
+    -o Acquire::https::Timeout=30
+    -o APT::Get::List-Cleanup=0
+)
+
+if ! apt-get "${apt_options[@]}" update >/tmp/kubespray-apt-preflight-output.$$ 2>&1
+then
+    sed -E \
+        -e 's#(https?://)[^/@[:space:]]+:[^/@[:space:]]+@#\1***:***@#g' \
+        -e 's#([Aa]uthorization:).*#\1 ***#g' \
+        /tmp/kubespray-apt-preflight-output.$$ >&2 || true
+    rm -f -- /tmp/kubespray-apt-preflight-output.$$
+    add_error "APT_SIGNED_METADATA_CHECK_FAILED"
+else
+    rm -f -- /tmp/kubespray-apt-preflight-output.$$
+fi
+
+required_packages=(
+    ca-certificates conntrack curl ebtables ethtool iproute2 ipset
+    iptables ipvsadm kmod libseccomp2 openssl python3 python3-apt
+    rsync socat sudo tar util-linux
+)
+
+if ! apt-get "${apt_options[@]}" --simulate install "${required_packages[@]}" \
+    >/dev/null 2>&1
+then
+    add_error "APT_PACKAGE_RESOLUTION_FAILED"
+fi
+
+check_http()
+{
+    local name="$1"
+    local url="$2"
+    local accepted="$3"
+    local code=""
+
+    code="$(
+        curl \
+            --location \
+            --silent \
+            --show-error \
+            --output /dev/null \
+            --connect-timeout 15 \
+            --max-time 45 \
+            --write-out '%{http_code}' \
+            "${url}" || true
+    )"
+
+    grep -Eq "^(${accepted})$" <<< "${code}" ||
+        add_error "HTTPS_ENDPOINT_FAILED_${name}_${code:-NO_CODE}"
+}
+
+check_http "APT_INRELEASE" \
+    "https://mirror.yandex.ru/ubuntu/dists/jammy/InRelease" "200"
+check_http "KUBEADM_BINARY" \
+    "https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubeadm" "200"
+check_http "KUBERNETES_REGISTRY" \
+    "https://registry.k8s.io/v2/" "200|401|404"
+check_http "QUAY_REGISTRY" \
+    "https://quay.io/v2/" "200|401"
+check_http "DOCKER_REGISTRY" \
+    "https://registry-1.docker.io/v2/" "200|401"
+check_http "GHCR_REGISTRY" \
+    "https://ghcr.io/v2/" "200|401"
+check_http "GITHUB" "https://github.com/" "200"
+
+proxy_environment="NOT_SET"
+if env | awk -F= 'tolower($1) ~ /^(http|https|all|no)_proxy$/ { found=1 } END { exit(found ? 0 : 1) }'
+then
+    proxy_environment="PRESENT"
+fi
+
+containerd_state="$(systemctl is-active containerd 2>/dev/null || true)"
+containerd_package="$(dpkg-query -W -f='${db:Status-Abbrev}' containerd.io 2>/dev/null || true)"
+
+printf 'HOST=%s\n' "{{ inventory_hostname }}"
+printf 'PRIMARY_IPV4=%s\n' "{{ ansible_default_ipv4.address }}"
+printf 'PRIMARY_INTERFACE=%s\n' "{{ ansible_default_ipv4.interface }}"
+printf 'PRIMARY_MTU=%s\n' "{{ ansible_default_ipv4.mtu }}"
+printf 'CPU_VCPU=%s\n' "{{ ansible_processor_vcpus }}"
+printf 'MEMORY_MB=%s\n' "{{ ansible_memtotal_mb }}"
+printf 'ROOT_FREE_KB=%s\n' "${root_free_kb}"
+printf 'ROOT_FREE_INODES=%s\n' "${root_free_inodes}"
+printf 'IPV4_FORWARDING=%s\n' "${ipv4_forward}"
+printf 'SWAP=%s\n' "$([[ -z "${active_swap}" ]] && printf DISABLED || printf ACTIVE)"
+printf 'NTP_SYNCHRONIZED=%s\n' "${ntp_state}"
+printf 'CLOUD_INIT=%s\n' "${cloud_init_state}"
+printf 'UFW=%s\n' "${ufw_state}"
+printf 'FIREWALLD=%s\n' "${firewalld_state}"
+printf 'PROXY_ENVIRONMENT=%s\n' "${proxy_environment}"
+printf 'CONTAINERD_SERVICE=%s\n' "${containerd_state:-NOT_INSTALLED}"
+printf 'CONTAINERD_PACKAGE=%s\n' "${containerd_package:-NOT_INSTALLED}"
+
+if (( ${#warnings[@]} > 0 ))
+then
+    printf 'WARNINGS=%s\n' "${warnings[*]}"
+else
+    printf 'WARNINGS=NONE\n'
+fi
+
+if (( ${#errors[@]} > 0 ))
+then
+    printf 'HOST_AUDIT_ERRORS=%s\n' "${errors[*]}" >&2
+    exit 50
+fi
+
+printf 'HOST_AUDIT_RESULT=SUCCESS\n'
+. failed at splitting arguments, either an unbalanced jinja2 block or quotes: set -Eeuo pipefail
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
+
+errors=()
+warnings=()
+
+add_error()
+{
+    errors+=("$1")
+}
+
+add_warning()
+{
+    warnings+=("$1")
+}
+
+root_free_kb="$(df -Pk / | awk 'NR == 2 { print $4 }')"
+root_free_inodes="$(df -Pi / | awk 'NR == 2 { print $4 }')"
+root_inode_use="$(df -Pi / | awk 'NR == 2 { gsub(/%/, "", $5); print $5 }')"
+
+(( root_free_kb >= 10485760 )) || add_error "ROOT_FREE_SPACE_LT_10_GIB"
+(( root_free_inodes >= 100000 )) || add_error "ROOT_FREE_INODES_LT_100000"
+(( root_inode_use < 90 )) || add_error "ROOT_INODE_USAGE_GE_90_PERCENT"
+
+active_swap="$(swapon --noheadings --show=NAME 2>/dev/null || true)"
+[[ -z "${active_swap}" ]] || add_error "SWAP_ACTIVE"
+
+ipv4_forward="$(sysctl -n net.ipv4.ip_forward 2>/dev/null || true)"
+[[ "${ipv4_forward}" == "1" ]] || add_error "IPV4_FORWARDING_DISABLED"
+
+ntp_state="$(timedatectl show --property=NTPSynchronized --value 2>/dev/null || true)"
+[[ "${ntp_state}" == "yes" ]] || add_error "TIME_NOT_SYNCHRONIZED"
+
+if command -v cloud-init >/dev/null 2>&1
+then
+    cloud_init_state="$(cloud-init status 2>/dev/null | awk '{ print $2; exit }')"
+    [[ "${cloud_init_state}" == "done" ]] || add_error "CLOUD_INIT_NOT_DONE"
+else
+    cloud_init_state="NOT_INSTALLED"
+fi
+
+[[ ! -e /var/run/reboot-required ]] || add_error "REBOOT_REQUIRED"
+
+dpkg_audit="$(dpkg --audit 2>&1 || true)"
+[[ -z "${dpkg_audit}" ]] || add_error "DPKG_AUDIT_NOT_CLEAN"
+
+if command -v ufw >/dev/null 2>&1
+then
+    ufw_state="$(ufw status 2>/dev/null | head -n 1 || true)"
+    grep -Fqi 'inactive' <<< "${ufw_state}" || add_error "UFW_ACTIVE"
+else
+    ufw_state="NOT_INSTALLED"
+fi
+
+if systemctl list-unit-files firewalld.service >/dev/null 2>&1
+then
+    firewalld_state="$(systemctl is-active firewalld 2>/dev/null || true)"
+    [[ "${firewalld_state}" != "active" ]] || add_error "FIREWALLD_ACTIVE"
+else
+    firewalld_state="NOT_INSTALLED"
+fi
+
+if command -v iptables-save >/dev/null 2>&1
+then
+    filter_policies="$(iptables-save -t filter 2>/dev/null | awk '$1 ~ /^:/ { print $1, $2 }')"
+    grep -Eq '^:INPUT DROP$|^:FORWARD DROP$' <<< "${filter_policies}" &&
+        add_error "IPTABLES_DEFAULT_DROP_POLICY" || true
+
+    if iptables-save 2>/dev/null | grep -Eq '(^|[[:space:]])(KUBE-|cali-|CNI-|FLANNEL)'
+    then
+        add_error "KUBERNETES_OR_CNI_IPTABLES_RESIDUE"
+    fi
+fi
+
+for module in overlay br_netfilter nf_conntrack ip_vs ip_vs_rr ip_vs_wrr ip_vs_sh
+do
+    modinfo "${module}" >/dev/null 2>&1 || add_error "KERNEL_MODULE_UNAVAILABLE_${module}"
+done
+
+for service in kubelet etcd
+do
+    if systemctl is-active --quiet "${service}" 2>/dev/null ||
+       systemctl is-enabled --quiet "${service}" 2>/dev/null
+    then
+        add_error "STALE_SERVICE_${service}"
+    fi
+done
+
+for package_name in kubeadm kubelet kubectl kubernetes-cni
+do
+    package_state="$(dpkg-query -W -f='${db:Status-Abbrev}' "${package_name}" 2>/dev/null || true)"
+    [[ "${package_state}" != "ii " ]] || add_error "STALE_PACKAGE_${package_name}"
+done
+
+for binary in kubeadm kubelet kubectl
+do
+    command -v "${binary}" >/dev/null 2>&1 && add_error "STALE_BINARY_${binary}" || true
+done
+
+for directory in \
+    /etc/kubernetes \
+    /var/lib/kubelet \
+    /var/lib/etcd \
+    /etc/cni/net.d \
+    /var/lib/cni \
+    /opt/cni/bin
+do
+    if [[ -d "${directory}" ]] &&
+       find "${directory}" -mindepth 1 -print -quit 2>/dev/null | grep -q .
+    then
+        add_error "STALE_DIRECTORY_${directory//\//_}"
+    fi
+done
+
+if ip -o link show 2>/dev/null |
+    grep -Eq '^[0-9]+: (cni0|flannel\.|cali|tunl0|vxlan\.calico|kube-ipvs0)'
+then
+    add_error "STALE_KUBERNETES_NETWORK_INTERFACE"
+fi
+
+if ip -4 route show 2>/dev/null |
+    grep -Eq '(^|[[:space:]])10\.233\.(0|[1-9]|[1-9][0-9]|1[01][0-9]|12[0-7])\.'
+then
+    add_error "STALE_KUBERNETES_ROUTE"
+fi
+
+role_ports=(10250)
+if [[ "{{ inventory_hostname }}" == k8s-master-* ]]
+then
+    role_ports+=(2379 2380 6443 10257 10259)
+else
+    role_ports+=(10256)
+fi
+
+listening_sockets="$(ss -H -lntup 2>/dev/null || true)"
+for port in "${role_ports[@]}"
+do
+    if awk -v port=":${port}" '$5 ~ port "$" { found=1 } END { exit(found ? 0 : 1) }' \
+        <<< "${listening_sockets}"
+    then
+        add_error "REQUIRED_PORT_ALREADY_IN_USE_${port}"
+    fi
+done
+
+default_route_count="$(ip -4 route show default | awk 'END { print NR + 0 }')"
+(( default_route_count >= 1 )) || add_error "DEFAULT_ROUTE_MISSING"
+
+route_overlap="$({
+    ip -4 route show |
+        awk '$1 != "default" && $1 ~ /^[0-9]+\./ { print $1 }' |
+        python3 -c '
+import ipaddress
+import sys
+
+service = ipaddress.ip_network("10.233.0.0/18")
+pods = ipaddress.ip_network("10.233.64.0/18")
+
+for text in sys.stdin:
+    text = text.strip()
+    if not text:
+        continue
+    try:
+        route = ipaddress.ip_network(text, strict=False)
+    except ValueError:
+        continue
+    if route.overlaps(service) or route.overlaps(pods):
+        print(route)
+' || true
+})"
+[[ -z "${route_overlap}" ]] || add_error "POD_OR_SERVICE_NETWORK_ROUTE_OVERLAP"
+
+for peer_ip in \
+    172.16.1.10 172.16.2.10 172.16.3.10 \
+    172.16.1.21 172.16.2.21 172.16.3.21
+do
+    timeout 5 bash -c "exec 3<>/dev/tcp/${peer_ip}/22" 2>/dev/null ||
+        add_error "PEER_SSH_UNREACHABLE_${peer_ip}"
+done
+
+for dns_name in \
+    mirror.yandex.ru \
+    dl.k8s.io \
+    registry.k8s.io \
+    quay.io \
+    registry-1.docker.io \
+    github.com \
+    ghcr.io
+do
+    getent ahostsv4 "${dns_name}" >/dev/null 2>&1 ||
+        add_error "DNS_RESOLUTION_FAILED_${dns_name}"
+done
+
+apt_temp="$(mktemp -d /tmp/kubespray-apt-preflight.XXXXXX)"
+cleanup_apt_temp()
+{
+    rm -rf -- "${apt_temp}"
+}
+trap cleanup_apt_temp EXIT
+
+mkdir -p -- \
+    "${apt_temp}/lists/partial" \
+    "${apt_temp}/cache/archives/partial"
+chmod 755 -- "${apt_temp}" "${apt_temp}/lists" "${apt_temp}/lists/partial"
+
+apt_options=(
+    -o "Dir::State::lists=${apt_temp}/lists"
+    -o "Dir::Cache=${apt_temp}/cache"
+    -o Acquire::Retries=2
+    -o Acquire::http::Timeout=30
+    -o Acquire::https::Timeout=30
+    -o APT::Get::List-Cleanup=0
+)
+
+if ! apt-get "${apt_options[@]}" update >/tmp/kubespray-apt-preflight-output.$$ 2>&1
+then
+    sed -E \
+        -e 's#(https?://)[^/@[:space:]]+:[^/@[:space:]]+@#\1***:***@#g' \
+        -e 's#([Aa]uthorization:).*#\1 ***#g' \
+        /tmp/kubespray-apt-preflight-output.$$ >&2 || true
+    rm -f -- /tmp/kubespray-apt-preflight-output.$$
+    add_error "APT_SIGNED_METADATA_CHECK_FAILED"
+else
+    rm -f -- /tmp/kubespray-apt-preflight-output.$$
+fi
+
+required_packages=(
+    ca-certificates conntrack curl ebtables ethtool iproute2 ipset
+    iptables ipvsadm kmod libseccomp2 openssl python3 python3-apt
+    rsync socat sudo tar util-linux
+)
+
+if ! apt-get "${apt_options[@]}" --simulate install "${required_packages[@]}" \
+    >/dev/null 2>&1
+then
+    add_error "APT_PACKAGE_RESOLUTION_FAILED"
+fi
+
+check_http()
+{
+    local name="$1"
+    local url="$2"
+    local accepted="$3"
+    local code=""
+
+    code="$(
+        curl \
+            --location \
+            --silent \
+            --show-error \
+            --output /dev/null \
+            --connect-timeout 15 \
+            --max-time 45 \
+            --write-out '%{http_code}' \
+            "${url}" || true
+    )"
+
+    grep -Eq "^(${accepted})$" <<< "${code}" ||
+        add_error "HTTPS_ENDPOINT_FAILED_${name}_${code:-NO_CODE}"
+}
+
+check_http "APT_INRELEASE" \
+    "https://mirror.yandex.ru/ubuntu/dists/jammy/InRelease" "200"
+check_http "KUBEADM_BINARY" \
+    "https://dl.k8s.io/release/{{ kube_version }}/bin/linux/amd64/kubeadm" "200"
+check_http "KUBERNETES_REGISTRY" \
+    "https://registry.k8s.io/v2/" "200|401|404"
+check_http "QUAY_REGISTRY" \
+    "https://quay.io/v2/" "200|401"
+check_http "DOCKER_REGISTRY" \
+    "https://registry-1.docker.io/v2/" "200|401"
+check_http "GHCR_REGISTRY" \
+    "https://ghcr.io/v2/" "200|401"
+check_http "GITHUB" "https://github.com/" "200"
+
+proxy_environment="NOT_SET"
+if env | awk -F= 'tolower($1) ~ /^(http|https|all|no)_proxy$/ { found=1 } END { exit(found ? 0 : 1) }'
+then
+    proxy_environment="PRESENT"
+fi
+
+containerd_state="$(systemctl is-active containerd 2>/dev/null || true)"
+containerd_package="$(dpkg-query -W -f='${db:Status-Abbrev}' containerd.io 2>/dev/null || true)"
+
+printf 'HOST=%s\n' "{{ inventory_hostname }}"
+printf 'PRIMARY_IPV4=%s\n' "{{ ansible_default_ipv4.address }}"
+printf 'PRIMARY_INTERFACE=%s\n' "{{ ansible_default_ipv4.interface }}"
+printf 'PRIMARY_MTU=%s\n' "{{ ansible_default_ipv4.mtu }}"
+printf 'CPU_VCPU=%s\n' "{{ ansible_processor_vcpus }}"
+printf 'MEMORY_MB=%s\n' "{{ ansible_memtotal_mb }}"
+printf 'ROOT_FREE_KB=%s\n' "${root_free_kb}"
+printf 'ROOT_FREE_INODES=%s\n' "${root_free_inodes}"
+printf 'IPV4_FORWARDING=%s\n' "${ipv4_forward}"
+printf 'SWAP=%s\n' "$([[ -z "${active_swap}" ]] && printf DISABLED || printf ACTIVE)"
+printf 'NTP_SYNCHRONIZED=%s\n' "${ntp_state}"
+printf 'CLOUD_INIT=%s\n' "${cloud_init_state}"
+printf 'UFW=%s\n' "${ufw_state}"
+printf 'FIREWALLD=%s\n' "${firewalld_state}"
+printf 'PROXY_ENVIRONMENT=%s\n' "${proxy_environment}"
+printf 'CONTAINERD_SERVICE=%s\n' "${containerd_state:-NOT_INSTALLED}"
+printf 'CONTAINERD_PACKAGE=%s\n' "${containerd_package:-NOT_INSTALLED}"
+
+if (( ${#warnings[@]} > 0 ))
+then
+    printf 'WARNINGS=%s\n' "${warnings[*]}"
+else
+    printf 'WARNINGS=NONE\n'
+fi
+
+if (( ${#errors[@]} > 0 ))
+then
+    printf 'HOST_AUDIT_ERRORS=%s\n' "${errors[*]}" >&2
+    exit 50
+fi
+
+printf 'HOST_AUDIT_RESULT=SUCCESS\n'
+
+
+The error appears to be in '/tmp/kubespray-preflight-audit.WjJq8a.yml': line 35, column 7, but may
+be elsewhere in the file depending on the exact syntax problem.
+
+The offending line appears to be:
+
+
+    - name: Run comprehensive host audit without persistent changes
+      ^ here
+
+KUBESPRAY_PREFLIGHT_RESULT=FAILED
+FAILED_COMMAND="${VENV_ANSIBLE_PLAYBOOK}" -i "${INVENTORY_FILE}" "${AUDIT_PLAYBOOK}" --syntax-check
+EXIT_CODE=4

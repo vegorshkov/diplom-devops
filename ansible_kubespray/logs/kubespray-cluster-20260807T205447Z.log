@@ -1,0 +1,79 @@
+START_TIME=2026-08-07T23:54:47+03:00
+PROJECT_DIR=/home/vgorshkov/STUDENT1/PROJECT/diplom-devops
+KUBESPRAY_DIR=/home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/kubespray
+INVENTORY_FILE=/home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/inventory/hosts.yaml
+LOG_FILE=/home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/logs/kubespray-cluster-20260807T205447Z.log
+
+1. Проверка локальной среды
+VIRTUAL_ENV=/home/vgorshkov/venv-ansible
+Python 3.12.3
+pip 24.0 from /home/vgorshkov/venv-ansible/lib/python3.12/site-packages/pip (python 3.12)
+ansible [core 2.16.19]
+  config file = None
+  configured module search path = ['/home/vgorshkov/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /home/vgorshkov/venv-ansible/lib/python3.12/site-packages/ansible
+  ansible collection location = /home/vgorshkov/.ansible/collections:/usr/share/ansible/collections
+  executable location = /home/vgorshkov/venv-ansible/bin/ansible
+  python version = 3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0] (/home/vgorshkov/venv-ansible/bin/python3.12)
+  jinja version = 3.1.6
+  libyaml = True
+ansible-playbook [core 2.16.19]
+  config file = None
+  configured module search path = ['/home/vgorshkov/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /home/vgorshkov/venv-ansible/lib/python3.12/site-packages/ansible
+  ansible collection location = /home/vgorshkov/.ansible/collections:/usr/share/ansible/collections
+  executable location = /home/vgorshkov/venv-ansible/bin/ansible-playbook
+  python version = 3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0] (/home/vgorshkov/venv-ansible/bin/python3.12)
+  jinja version = 3.1.6
+  libyaml = True
+
+2. Проверка зависимостей
+No broken requirements found.
+
+# /home/vgorshkov/venv-ansible/lib/python3.12/site-packages/ansible_collections
+Collection    Version
+------------- -------
+ansible.utils 2.12.0 
+DEPENDENCIES=OK
+
+3. Подготовка group_vars
+Копирование штатных group_vars из текущей версии Kubespray
+Создан файл /home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/inventory/group_vars/k8s_cluster/99-diplom.yml
+
+4. Проверка структуры inventory
+@all:
+  |--@ungrouped:
+  |--@kube_control_plane:
+  |  |--k8s-master-ru-central1-a
+  |  |--k8s-master-ru-central1-b
+  |  |--k8s-master-ru-central1-d
+  |--@kube_node:
+  |  |--k8s-worker-ru-central1-a
+  |  |--k8s-worker-ru-central1-b
+  |  |--k8s-worker-ru-central1-d
+  |--@etcd:
+  |  |--k8s-master-ru-central1-a
+  |  |--k8s-master-ru-central1-b
+  |  |--k8s-master-ru-central1-d
+  |--@k8s_cluster:
+  |  |--@kube_control_plane:
+  |  |  |--k8s-master-ru-central1-a
+  |  |  |--k8s-master-ru-central1-b
+  |  |  |--k8s-master-ru-central1-d
+  |  |--@kube_node:
+  |  |  |--k8s-worker-ru-central1-a
+  |  |  |--k8s-worker-ru-central1-b
+  |  |  |--k8s-worker-ru-central1-d
+CONTROL_PLANE=k8s-master-ru-central1-a,k8s-master-ru-central1-b,k8s-master-ru-central1-d
+WORKERS=k8s-worker-ru-central1-a,k8s-worker-ru-central1-b,k8s-worker-ru-central1-d
+ETCD=k8s-master-ru-central1-a,k8s-master-ru-central1-b,k8s-master-ru-central1-d
+INVENTORY_CHECK=OK
+
+5. Проверка итоговых переменных Kubespray
+Ошибка group_vars:
+dns_domain: ожидалось='cluster.local', получено='{{ cluster_name }}'
+
+RESULT=FAILED
+EXIT_CODE=1
+ERROR_LINE=393
+LOG_FILE=/home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/logs/kubespray-cluster-20260807T205447Z.log

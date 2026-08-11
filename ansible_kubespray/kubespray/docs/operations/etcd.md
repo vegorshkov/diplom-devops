@@ -14,7 +14,7 @@ Installs docker in etcd group members and runs etcd on docker containers. Only u
 
 ### Kubeadm
 
-This deployment method is experimental and is only available for new deployments. This deploys etcd as a static pod on control plane hosts.
+This deployment method is experimental and is only available for new deployments. This deploys etcd as a static pod in master hosts.
 
 ## Metrics
 
@@ -32,12 +32,12 @@ etcd_metrics_service_labels:
   k8s-app: etcd
   app.kubernetes.io/managed-by: Kubespray
   app: kube-prometheus-stack-kube-etcd
-  release: kube-prometheus-stack
+  release: prometheus-stack
 ```
 
 The last two labels in the above example allows to scrape the metrics from the
 [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
-chart when it is installed with the release name `kube-prometheus-stack` and the following Helm `values.yaml`:
+chart with the following Helm `values.yaml` :
 
 ```yaml
 kubeEtcd:
@@ -45,22 +45,8 @@ kubeEtcd:
     enabled: false
 ```
 
-If your Helm release name is different, adjust the `release` label accordingly.
-
-To fully override metrics exposition URLs, define it in the inventory with:
+To fully override metrics exposition urls, define it in the inventory with:
 
 ```yaml
 etcd_listen_metrics_urls: "http://0.0.0.0:2381"
-```
-
-If you choose to expose metrics on specific node IPs (for example `10.141.4.22`, `10.141.4.23`, `10.141.4.24`) in `etcd_listen_metrics_urls`,
-you can configure kube-prometheus-stack to scrape those endpoints directly with:
-
-```yaml
-kubeEtcd:
-  enabled: true
-  endpoints:
-    - 10.141.4.22
-    - 10.141.4.23
-    - 10.141.4.24
 ```

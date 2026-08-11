@@ -8,11 +8,6 @@ OpenStack.
 This will install a Kubernetes cluster on an OpenStack Cloud. It should work on
 most modern installs of OpenStack that support the basic services.
 
-## OpenStack Support Documentation
-
-For OpenStack cloud provider configuration (Octavia load balancers, Cinder CSI storage,
-network plugins like Calico), see the [main OpenStack documentation](../../../docs/cloud_controllers/openstack.md).
-
 ### Known compatible public clouds
 
 - [Auro](https://auro.io/)
@@ -65,17 +60,17 @@ You can create many different kubernetes topologies by setting the number of
 different classes of hosts. For each class there are options for allocating
 floating IP addresses or not.
 
-- Control plane nodes with etcd
-- Control plane nodes without etcd
+- Master nodes with etcd
+- Master nodes without etcd
 - Standalone etcd hosts
 - Kubernetes worker nodes
 
 Note that the Ansible script will report an invalid configuration if you wind up
 with an even number of etcd instances since that is not a valid configuration. This
 restriction includes standalone etcd nodes that are deployed in a cluster along with
-control plane nodes with etcd replicas. As an example, if you have three control plane
-nodes with etcd replicas and three standalone etcd nodes, the script will fail since
-there are now six total etcd replicas.
+master nodes with etcd replicas. As an example, if you have three master nodes with
+etcd replicas and three standalone etcd nodes, the script will fail since there are
+now six total etcd replicas.
 
 ### GlusterFS shared file system
 
@@ -94,8 +89,8 @@ binaries available on hyperkube v1.4.3_coreos.0 or higher.
 
 ## Requirements
 
-- [Install OpenTofu](https://opentofu.org/docs/intro/install/) 1.9.0 or later
-- [Install Ansible](https://docs.ansible.com/ansible/latest/intro_installation.html)
+- [Install Terraform](https://www.terraform.io/intro/getting-started/install.html) 0.14 or later
+- [Install Ansible](http://docs.ansible.com/ansible/latest/intro_installation.html)
 - you already have a suitable OS image in Glance
 - you already have a floating IP pool created
 - you have security groups enabled
@@ -134,7 +129,6 @@ Terraform will be used to provision all of the OpenStack resources with base sof
 Create an inventory directory for your cluster by copying the existing sample and linking the `hosts` script (used to build the inventory based on Terraform state):
 
 ```ShellSession
-CLUSTER=your-cluster-name
 cp -LRp contrib/terraform/openstack/sample-inventory inventory/$CLUSTER
 cd inventory/$CLUSTER
 ln -s ../../contrib/terraform/openstack/hosts
@@ -152,7 +146,7 @@ different OpenStack environments may support Identity API version 2 or 3.
 
 These are examples and may vary depending on your OpenStack cloud provider,
 for an exhaustive list on how to authenticate on OpenStack with Terraform
-please read the [OpenStack provider documentation](https://registry.terraform.io/providers/terraform-provider-openstack/openstack/latest/docs).
+please read the [OpenStack provider documentation](https://www.terraform.io/docs/providers/openstack/).
 
 ##### Declarative method (recommended)
 
@@ -264,11 +258,9 @@ For your cluster, edit `inventory/$CLUSTER/cluster.tfvars`.
 |`bastion_fips` | A list of floating IPs that you have already pre-allocated; they will be attached to bastion node instead of creating new random floating IPs. |
 |`external_net` | UUID of the external network that will be routed to |
 |`flavor_k8s_master`,`flavor_k8s_node`,`flavor_etcd`, `flavor_bastion`,`flavor_gfs_node` | Flavor depends on your openstack installation, you can get available flavor IDs through `openstack flavor list` |
-|`image`,`image_gfs`, `image_master` | Name of the image to use in provisioning the compute resources. Should already be loaded into glance. |
-|`image_uuid`,`image_gfs_uuid`, `image_master_uuid` | UUID of the image to use in provisioning the compute resources. Should already be loaded into glance. |
+|`image`,`image_gfs` | Name of the image to use in provisioning the compute resources. Should already be loaded into glance. |
 |`ssh_user`,`ssh_user_gfs` | The username to ssh into the image with. This usually depends on the image you have selected |
 |`public_key_path` | Path on your local workstation to the public key file you wish to use in creating the key pairs |
-|`group_vars_path` | path to the inventory group vars directory, `./group_vars` by default |
 |`number_of_k8s_masters`, `number_of_k8s_masters_no_floating_ip` | Number of nodes that serve as both master and etcd. These can be provisioned with or without floating IP addresses|
 |`number_of_k8s_masters_no_etcd`, `number_of_k8s_masters_no_floating_ip_no_etcd` |  Number of nodes that serve as just master with no etcd. These can be provisioned with or without floating IP addresses |
 |`number_of_etcd` | Number of pure etcd nodes |
@@ -288,9 +280,9 @@ For your cluster, edit `inventory/$CLUSTER/cluster.tfvars`.
 |`k8s_allowed_remote_ips_ipv6` | List of IPv6 CIDR allowed to initiate a SSH connection, empty by default |
 |`k8s_allowed_egress_ipv6_ips` | List of IPv6 CIDRs allowed for egress traffic, `["::/0"]` by default |
 |`worker_allowed_ports` | List of ports to open on worker nodes, `[{ "protocol" = "tcp", "port_range_min" = 30000, "port_range_max" = 32767, "remote_ip_prefix" = "0.0.0.0/0"}]` by default |
-|`worker_allowed_ports_ipv6` | List of ports to open on worker nodes for IPv6 CIDR blocks, `[{ "protocol" = "tcp", "port_range_min" = 30000, "port_range_max" = 32767, "remote_ip_prefix" = "::/0"}, { "protocol" = "ipv6-icmp", "port_range_min" = 0, "port_range_max" = 0, "remote_ip_prefix" = "::/0"}]` by default |
+|`worker_allowed_ports_ipv6` | List of ports to open on worker nodes for IPv6 CIDR blocks, `[{ "protocol" = "tcp", "port_range_min" = 30000, "port_range_max" = 32767, "remote_ip_prefix" = "::/0"}]` by default |
 |`master_allowed_ports` | List of ports to open on master nodes, expected format is `[{ "protocol" = "tcp", "port_range_min" = 443, "port_range_max" = 443, "remote_ip_prefix" = "0.0.0.0/0"}]`, empty by default |
-|`master_allowed_ports_ipv6` | List of ports to open on master nodes for IPv6 CIDR blocks, `[{ "protocol" = "ipv6-icmp", "port_range_min" = 0, "port_range_max" = 0, "remote_ip_prefix" = "::/0"}]` by default |
+|`master_allowed_ports_ipv6` | List of ports to open on master nodes for IPv6 CIDR blocks, expected format is `[{ "protocol" = "tcp", "port_range_min" = 443, "port_range_max" = 443, "remote_ip_prefix" = "::/0"}]`, empty by default |
 |`node_root_volume_size_in_gb` | Size of the root volume for nodes, 0 to use ephemeral storage |
 |`master_root_volume_size_in_gb` | Size of the root volume for masters, 0 to use ephemeral storage |
 |`master_volume_type` | Volume type of the root volume for control_plane, 'Default' by default |
@@ -307,10 +299,10 @@ For your cluster, edit `inventory/$CLUSTER/cluster.tfvars`.
 |`force_null_port_security` | Set `null` instead of `true` or `false` for `port_security`. `false` by default |
 |`k8s_nodes` | Map containing worker node definition, see explanation below |
 |`k8s_masters` | Map containing master node definition, see explanation for k8s_nodes and `sample-inventory/cluster.tfvars` |
-|`k8s_master_loadbalancer_enabled` | Enable and use an Octavia load balancer for the K8s master nodes |
-|`k8s_master_loadbalancer_listener_port` | Define via which port the K8s Api should be exposed. `6443` by default  |
-|`k8s_master_loadbalancer_server_port` | Define via which port the K8S api is available on the master nodes. `6443` by default |
-|`k8s_master_loadbalancer_public_ip` | Specify if an existing floating IP should be used for the load balancer. A new floating IP is assigned by default  |
+| `k8s_master_loadbalancer_enabled`| Enable and use an Octavia load balancer for the K8s master nodes |
+| `k8s_master_loadbalancer_listener_port` | Define via which port the K8s Api should be exposed. `6443` by default  |
+| `k8s_master_loadbalancer_server_port` | Define via which port the K8S api is available on the mas. `6443` by default |
+| `k8s_master_loadbalancer_public_ip` | Specify if an existing floating IP should be used for the load balancer. A new floating IP is assigned by default  |
 
 ##### k8s_nodes
 
@@ -325,8 +317,7 @@ k8s_nodes:
    node-name:
     az: string # Name of the AZ
     flavor: string # Flavor ID to use
-    floating_ip: bool # If floating IPs should be used or not
-    reserved_floating_ip: string # If floating_ip is true use existing floating IP, if reserved_floating_ip is an empty string and floating_ip is true, a new floating IP will be created
+    floating_ip: bool # If floating IPs should be created or not
     extra_groups: string # (optional) Additional groups to add for kubespray, defaults to no groups
     image_id: string # (optional) Image ID to use, defaults to var.image_id or var.image
     root_volume_size_in_gb: number # (optional) Size of the block storage to use as root disk, defaults to var.node_root_volume_size_in_gb or to use volume from flavor otherwise
@@ -618,13 +609,7 @@ Edit `inventory/$CLUSTER/group_vars/all/all.yml`:
 bin_dir: /opt/bin
 ```
 
-- **external_cloud_provider**:
-
-```yml
-external_cloud_provider: openstack
-```
-
-- **Only if K8s < v1.31 - cloud_provider**:
+- and **cloud_provider**:
 
 ```yml
 cloud_provider: openstack
@@ -634,10 +619,10 @@ Edit `inventory/$CLUSTER/group_vars/k8s_cluster/k8s_cluster.yml`:
 
 - Set variable **kube_network_plugin** to your desired networking plugin.
   - **flannel** works out-of-the-box
-  - **calico** requires [configuring OpenStack Neutron ports](/docs/cloud_controllers/openstack.md) to allow service and pod subnets
+  - **calico** requires [configuring OpenStack Neutron ports](/docs/cloud_providers/openstack.md) to allow service and pod subnets
 
 ```yml
-# Choose network plugin (calico or flannel)
+# Choose network plugin (calico, weave or flannel)
 # Can also be set to 'cloud', which lets the cloud provider setup appropriate routing
 kube_network_plugin: flannel
 ```
@@ -729,12 +714,6 @@ Basically you will install Gluster as
 ```ShellSession
 ansible-playbook --become -i inventory/$CLUSTER/hosts ./contrib/network-storage/glusterfs/glusterfs.yml
 ```
-
-## Relevant Resources
-
-- [HauptJ - Example cluster.tfvars using floating IPs for all Master and Nodes](https://gist.github.com/HauptJ/d72e2a8fe0698d448283a51e847a5dfa)
-- [openmetal - Deploying a Kubespray cluster to OpenStack using Terraform](https://openmetal.io/docs/manuals/kubernetes-guides/deploying-a-kubespray-cluster-to-openstack-using-terraform/)
-- [Guoqiang Lan - Deploy Kubernetes with Kubespray on OpenStack](https://guoqianglan.github.io/tutorial/cloud/deploy-kubernetes-with-kubespray-on-openstack/)
 
 ## What's next
 

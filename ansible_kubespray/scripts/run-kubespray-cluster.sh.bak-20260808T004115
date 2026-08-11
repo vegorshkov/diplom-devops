@@ -1,0 +1,594 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+umask 027
+
+PROJECT_DIR="/home/vgorshkov/STUDENT1/PROJECT/diplom-devops"
+ANSIBLE_ROOT="${PROJECT_DIR}/ansible_kubespray"
+KUBESPRAY_DIR="${ANSIBLE_ROOT}/kubespray"
+INVENTORY_DIR="${ANSIBLE_ROOT}/inventory"
+INVENTORY_FILE="${INVENTORY_DIR}/hosts.yaml"
+INVENTORY_GROUP_VARS_DIR="${INVENTORY_DIR}/group_vars"
+SAMPLE_GROUP_VARS_DIR="${KUBESPRAY_DIR}/inventory/sample/group_vars"
+SCRIPTS_DIR="${ANSIBLE_ROOT}/scripts"
+LOG_DIR="${ANSIBLE_ROOT}/logs"
+SSH_CONFIG_FILE="/home/vgorshkov/.ssh/config"
+EXPECTED_EGRESS_IP="195.133.88.158"
+
+PROJECT_VARS_FILE="${INVENTORY_GROUP_VARS_DIR}/k8s_cluster/99-diplom.yml"
+
+EXPECTED_CONTROL_PLANE=(
+    "k8s-master-ru-central1-a"
+    "k8s-master-ru-central1-b"
+    "k8s-master-ru-central1-d"
+)
+
+EXPECTED_WORKERS=(
+    "k8s-worker-ru-central1-a"
+    "k8s-worker-ru-central1-b"
+    "k8s-worker-ru-central1-d"
+)
+
+EXPECTED_CLUSTER_HOSTS=(
+    "k8s-master-ru-central1-a"
+    "k8s-master-ru-central1-b"
+    "k8s-master-ru-central1-d"
+    "k8s-worker-ru-central1-a"
+    "k8s-worker-ru-central1-b"
+    "k8s-worker-ru-central1-d"
+)
+
+TEMP_FILES=()
+
+cleanup()
+{
+    local path
+
+    for path in "${TEMP_FILES[@]}"
+    do
+        if [[ -n "${path}" && -e "${path}" ]]
+        then
+            rm -f -- "${path}"
+        fi
+    done
+}
+
+on_error()
+{
+    local rc=$?
+
+    printf '\nRESULT=FAILED\n' >&2
+    printf 'EXIT_CODE=%s\n' "${rc}" >&2
+    printf 'ERROR_LINE=%s\n' "${BASH_LINENO[0]:-unknown}" >&2
+    printf 'LOG_FILE=%s\n' "${LOG_FILE:-not-created}" >&2
+
+    exit "${rc}"
+}
+
+die()
+{
+    printf 'ERROR: %s\n' "$*" >&2
+    exit 1
+}
+
+require_command()
+{
+    local command_name="$1"
+
+    command -v "${command_name}" >/dev/null 2>&1 ||
+        die "Не найдена команда: ${command_name}"
+}
+
+require_file()
+{
+    local file_path="$1"
+
+    [[ -f "${file_path}" ]] ||
+        die "Не найден файл: ${file_path}"
+}
+
+require_directory()
+{
+    local directory_path="$1"
+
+    [[ -d "${directory_path}" ]] ||
+        die "Не найден каталог: ${directory_path}"
+}
+
+trap cleanup EXIT
+trap on_error ERR
+
+mkdir -p "${LOG_DIR}"
+
+LOG_TIMESTAMP="$(date -u '+%Y%m%dT%H%M%SZ')"
+LOG_FILE="${LOG_DIR}/kubespray-cluster-${LOG_TIMESTAMP}.log"
+
+exec > >(tee -a "${LOG_FILE}") 2>&1
+
+printf 'START_TIME=%s\n' "$(date --iso-8601=seconds)"
+printf 'PROJECT_DIR=%s\n' "${PROJECT_DIR}"
+printf 'KUBESPRAY_DIR=%s\n' "${KUBESPRAY_DIR}"
+printf 'INVENTORY_FILE=%s\n' "${INVENTORY_FILE}"
+printf 'LOG_FILE=%s\n' "${LOG_FILE}"
+
+printf '\n1. Проверка локальной среды\n'
+
+if [[ -z "${VIRTUAL_ENV:-}" ]]
+then
+    die "Виртуальное окружение Python не активировано"
+fi
+
+require_command bash
+require_command python
+require_command ansible
+require_command ansible-doc
+require_command ansible-galaxy
+require_command ansible-inventory
+require_command ansible-playbook
+require_command ssh
+require_command awk
+require_command grep
+require_command find
+require_command install
+require_command cmp
+require_command mktemp
+require_command tee
+
+require_directory "${PROJECT_DIR}"
+require_directory "${ANSIBLE_ROOT}"
+require_directory "${KUBESPRAY_DIR}"
+require_directory "${SAMPLE_GROUP_VARS_DIR}"
+
+require_file "${KUBESPRAY_DIR}/cluster.yml"
+require_file "${KUBESPRAY_DIR}/ansible.cfg"
+require_file "${KUBESPRAY_DIR}/requirements.txt"
+require_file "${INVENTORY_FILE}"
+require_file "${SSH_CONFIG_FILE}"
+
+printf 'VIRTUAL_ENV=%s\n' "${VIRTUAL_ENV}"
+
+python --version
+python -m pip --version
+ansible --version
+ansible-playbook --version
+
+export ANSIBLE_CONFIG="${KUBESPRAY_DIR}/ansible.cfg"
+export PYTHONUNBUFFERED=1
+
+printf '\n2. Проверка зависимостей\n'
+
+python -m pip check
+
+ansible-doc \
+    --type module \
+    ansible.utils.validate \
+    >/dev/null
+
+ansible-galaxy collection list ansible.utils
+
+printf 'DEPENDENCIES=OK\n'
+
+printf '\n3. Подготовка group_vars\n'
+
+mkdir -p "${INVENTORY_GROUP_VARS_DIR}"
+
+FIRST_GROUP_VAR="$(
+    find "${INVENTORY_GROUP_VARS_DIR}" \
+        -type f \
+        -print \
+        -quit
+)"
+
+if [[ -z "${FIRST_GROUP_VAR}" ]]
+then
+    printf 'Копирование штатных group_vars из текущей версии Kubespray\n'
+
+    cp -a \
+        "${SAMPLE_GROUP_VARS_DIR}/." \
+        "${INVENTORY_GROUP_VARS_DIR}/"
+else
+    printf 'Существующие group_vars сохранены без перезаписи\n'
+    printf 'FIRST_GROUP_VAR=%s\n' "${FIRST_GROUP_VAR}"
+fi
+
+mkdir -p "${INVENTORY_GROUP_VARS_DIR}/k8s_cluster"
+
+PROJECT_VARS_TEMP="$(
+    mktemp /tmp/kubespray-project-vars.XXXXXX.yml
+)"
+TEMP_FILES+=("${PROJECT_VARS_TEMP}")
+
+cat > "${PROJECT_VARS_TEMP}" << 'PROJECT_VARS_EOF'
+---
+kube_network_plugin: calico
+container_manager: containerd
+
+kube_service_addresses: 10.233.0.0/18
+kube_pods_subnet: 10.233.64.0/18
+kube_network_node_prefix: 24
+
+dns_domain: cluster.local
+PROJECT_VARS_EOF
+
+if [[ -e "${PROJECT_VARS_FILE}" ]]
+then
+    if ! cmp -s "${PROJECT_VARS_TEMP}" "${PROJECT_VARS_FILE}"
+    then
+        die "Файл ${PROJECT_VARS_FILE} существует и отличается от утверждённой конфигурации"
+    fi
+
+    printf 'Проектные переменные уже соответствуют конфигурации\n'
+else
+    install \
+        -m 0644 \
+        "${PROJECT_VARS_TEMP}" \
+        "${PROJECT_VARS_FILE}"
+
+    printf 'Создан файл %s\n' "${PROJECT_VARS_FILE}"
+fi
+
+printf '\n4. Проверка структуры inventory\n'
+
+cd "${KUBESPRAY_DIR}"
+
+ansible-inventory \
+    -i "${INVENTORY_FILE}" \
+    --graph
+
+INVENTORY_JSON="$(
+    mktemp /tmp/kubespray-inventory.XXXXXX.json
+)"
+TEMP_FILES+=("${INVENTORY_JSON}")
+
+ansible-inventory \
+    -i "${INVENTORY_FILE}" \
+    --list \
+    > "${INVENTORY_JSON}"
+
+python - "${INVENTORY_JSON}" << 'PYTHON_EOF'
+import json
+import sys
+
+inventory_path = sys.argv[1]
+
+with open(inventory_path, encoding="utf-8") as source:
+    inventory = json.load(source)
+
+expected_control_plane = {
+    "k8s-master-ru-central1-a",
+    "k8s-master-ru-central1-b",
+    "k8s-master-ru-central1-d",
+}
+
+expected_workers = {
+    "k8s-worker-ru-central1-a",
+    "k8s-worker-ru-central1-b",
+    "k8s-worker-ru-central1-d",
+}
+
+expected_cluster = expected_control_plane | expected_workers
+
+
+def group_hosts(group_name):
+    visited = set()
+
+    def walk(current_group):
+        if current_group in visited:
+            return set()
+
+        visited.add(current_group)
+
+        group_data = inventory.get(current_group, {})
+        result = set(group_data.get("hosts", []))
+
+        for child_group in group_data.get("children", []):
+            result.update(walk(child_group))
+
+        return result
+
+    return walk(group_name)
+
+
+actual_control_plane = group_hosts("kube_control_plane")
+actual_workers = group_hosts("kube_node")
+actual_etcd = group_hosts("etcd")
+actual_cluster = group_hosts("k8s_cluster")
+
+checks = (
+    (
+        "kube_control_plane",
+        actual_control_plane,
+        expected_control_plane,
+    ),
+    (
+        "kube_node",
+        actual_workers,
+        expected_workers,
+    ),
+    (
+        "etcd",
+        actual_etcd,
+        expected_control_plane,
+    ),
+    (
+        "k8s_cluster",
+        actual_cluster,
+        expected_cluster,
+    ),
+)
+
+errors = []
+
+for group_name, actual_hosts, expected_hosts in checks:
+    if actual_hosts != expected_hosts:
+        errors.append(
+            f"{group_name}: "
+            f"ожидалось={sorted(expected_hosts)}, "
+            f"получено={sorted(actual_hosts)}"
+        )
+
+hostvars = inventory.get("_meta", {}).get("hostvars", {})
+
+for host_name in sorted(expected_cluster):
+    variables = hostvars.get(host_name)
+
+    if variables is None:
+        errors.append(
+            f"{host_name}: отсутствует в hostvars"
+        )
+        continue
+
+    ansible_host = variables.get("ansible_host")
+    ansible_user = variables.get("ansible_user")
+
+    if ansible_host not in (None, host_name):
+        errors.append(
+            f"{host_name}: ansible_host={ansible_host!r}; "
+            "SSH-псевдоним будет обойдён"
+        )
+
+    if ansible_user not in (None, "ubuntu"):
+        errors.append(
+            f"{host_name}: ansible_user={ansible_user!r}; "
+            "ожидается ubuntu"
+        )
+
+if errors:
+    raise SystemExit(
+        "Ошибка inventory:\n" + "\n".join(errors)
+    )
+
+print(
+    "CONTROL_PLANE="
+    + ",".join(sorted(actual_control_plane))
+)
+
+print(
+    "WORKERS="
+    + ",".join(sorted(actual_workers))
+)
+
+print(
+    "ETCD="
+    + ",".join(sorted(actual_etcd))
+)
+
+print(
+    "INVENTORY_CHECK=OK"
+)
+PYTHON_EOF
+
+printf '\n5. Проверка итоговых переменных Kubespray\n'
+
+HOST_VARS_JSON="$(
+    mktemp /tmp/kubespray-host-vars.XXXXXX.json
+)"
+TEMP_FILES+=("${HOST_VARS_JSON}")
+
+ansible-inventory \
+    -i "${INVENTORY_FILE}" \
+    --host "${EXPECTED_CONTROL_PLANE[0]}" \
+    > "${HOST_VARS_JSON}"
+
+python - "${HOST_VARS_JSON}" << 'PYTHON_EOF'
+import json
+import sys
+
+host_vars_path = sys.argv[1]
+
+with open(host_vars_path, encoding="utf-8") as source:
+    variables = json.load(source)
+
+expected = {
+    "kube_network_plugin": "calico",
+    "container_manager": "containerd",
+    "kube_service_addresses": "10.233.0.0/18",
+    "kube_pods_subnet": "10.233.64.0/18",
+    "kube_network_node_prefix": 24,
+    "dns_domain": "cluster.local",
+}
+
+errors = []
+
+for variable_name, expected_value in expected.items():
+    actual_value = variables.get(variable_name)
+
+    if actual_value != expected_value:
+        errors.append(
+            f"{variable_name}: "
+            f"ожидалось={expected_value!r}, "
+            f"получено={actual_value!r}"
+        )
+
+if errors:
+    raise SystemExit(
+        "Ошибка group_vars:\n" + "\n".join(errors)
+    )
+
+for variable_name, expected_value in expected.items():
+    print(f"{variable_name}={expected_value}")
+
+kube_version = variables.get(
+    "kube_version",
+    "значение по умолчанию текущей версии Kubespray",
+)
+
+print(f"kube_version={kube_version}")
+print("GROUP_VARS_CHECK=OK")
+PYTHON_EOF
+
+printf '\n6. Проверка SSH-псевдонимов\n'
+
+for host in "${EXPECTED_CLUSTER_HOSTS[@]}"
+do
+    RESOLVED_CONFIG="$(
+        ssh \
+            -G \
+            -F "${SSH_CONFIG_FILE}" \
+            "${host}" \
+            2>/dev/null
+    )"
+
+    RESOLVED_HOST="$(
+        awk '
+            tolower($1) == "hostname" {
+                print $2
+                exit
+            }
+        ' <<< "${RESOLVED_CONFIG}"
+    )"
+
+    PROXY_JUMP="$(
+        awk '
+            tolower($1) == "proxyjump" {
+                print $2
+                exit
+            }
+        ' <<< "${RESOLVED_CONFIG}"
+    )"
+
+    if [[ -z "${RESOLVED_HOST}" ||
+          "${RESOLVED_HOST}" == "${host}" ]]
+    then
+        die "Для ${host} не определён отдельный HostName"
+    fi
+
+    if [[ "${PROXY_JUMP}" != "yc-nat-instance" ]]
+    then
+        die "Для ${host} ProxyJump=${PROXY_JUMP:-NOT_SET}, ожидается yc-nat-instance"
+    fi
+
+    printf '%s -> %s; ProxyJump=%s\n' \
+        "${host}" \
+        "${RESOLVED_HOST}" \
+        "${PROXY_JUMP}"
+done
+
+printf 'SSH_CONFIG_CHECK=OK\n'
+
+printf '\n7. Проверка прямого SSH-доступа\n'
+
+for host in "${EXPECTED_CLUSTER_HOSTS[@]}"
+do
+    ssh \
+        -F "${SSH_CONFIG_FILE}" \
+        -o BatchMode=yes \
+        -o ConnectionAttempts=1 \
+        -o ConnectTimeout=20 \
+        "${host}" \
+        'printf "SSH_OK host=%s user=%s\n" "$(hostname)" "$(id -un)"'
+done
+
+printf 'SSH_CONNECTIVITY=OK\n'
+
+printf '\n8. Проверка Ansible и sudo\n'
+
+ansible \
+    k8s_cluster \
+    -i "${INVENTORY_FILE}" \
+    -m ansible.builtin.ping \
+    -o
+
+ansible \
+    k8s_cluster \
+    -i "${INVENTORY_FILE}" \
+    --become \
+    -m ansible.builtin.shell \
+    -a 'test "$(id -u)" -eq 0 && printf "BECOME_OK host=%s uid=%s\n" "$(hostname)" "$(id -u)"' \
+    -o
+
+printf 'ANSIBLE_CONNECTIVITY=OK\n'
+printf 'ANSIBLE_BECOME=OK\n'
+
+printf '\n9. Проверка DNS, HTTPS и адреса выхода\n'
+
+ansible \
+    k8s_cluster \
+    -i "${INVENTORY_FILE}" \
+    -m ansible.builtin.command \
+    -a 'getent ahostsv4 registry.k8s.io' \
+    -o
+
+NETWORK_CHECK='import urllib.request; expected="195.133.88.158"; ip=urllib.request.urlopen("https://api.ipify.org", timeout=30).read().decode().strip(); print("EGRESS_IP="+ip); assert ip == expected, "expected="+expected+", actual="+ip; urls=("https://dl.k8s.io/release/stable.txt","https://registry.k8s.io/v2/"); [urllib.request.urlopen(url, timeout=30).read(1) for url in urls]; print("HTTPS_CHECK=OK")'
+
+ansible \
+    k8s_cluster \
+    -i "${INVENTORY_FILE}" \
+    -m ansible.builtin.command \
+    -a "python3 -c '${NETWORK_CHECK}'" \
+    -o
+
+printf 'EXPECTED_EGRESS_IP=%s\n' "${EXPECTED_EGRESS_IP}"
+printf 'NETWORK_CHECK=OK\n'
+
+printf '\n10. Синтаксическая проверка cluster.yml\n'
+
+ansible-playbook \
+    -i "${INVENTORY_FILE}" \
+    cluster.yml \
+    --syntax-check
+
+printf 'KUBESPRAY_SYNTAX_CHECK=OK\n'
+
+printf '\n11. Запуск развёртывания Kubernetes\n'
+
+ansible-playbook \
+    -i "${INVENTORY_FILE}" \
+    cluster.yml \
+    --become
+
+printf '\n12. Проверка развёрнутого кластера\n'
+
+PRIMARY_CONTROL_PLANE="${EXPECTED_CONTROL_PLANE[0]}"
+
+ansible \
+    "${PRIMARY_CONTROL_PLANE}" \
+    -i "${INVENTORY_FILE}" \
+    --become \
+    -m ansible.builtin.shell \
+    -a 'KUBECONFIG=/etc/kubernetes/admin.conf kubectl wait --for=condition=Ready nodes --all --timeout=300s'
+
+ansible \
+    "${PRIMARY_CONTROL_PLANE}" \
+    -i "${INVENTORY_FILE}" \
+    --become \
+    -m ansible.builtin.shell \
+    -a 'KUBECONFIG=/etc/kubernetes/admin.conf kubectl -n kube-system rollout status daemonset/calico-node --timeout=300s'
+
+ansible \
+    "${PRIMARY_CONTROL_PLANE}" \
+    -i "${INVENTORY_FILE}" \
+    --become \
+    -m ansible.builtin.shell \
+    -a 'KUBECONFIG=/etc/kubernetes/admin.conf kubectl get nodes -o wide'
+
+ansible \
+    "${PRIMARY_CONTROL_PLANE}" \
+    -i "${INVENTORY_FILE}" \
+    --become \
+    -m ansible.builtin.shell \
+    -a 'KUBECONFIG=/etc/kubernetes/admin.conf kubectl get pods -A -o wide'
+
+printf '\nRESULT=SUCCESS\n'
+printf 'END_TIME=%s\n' "$(date --iso-8601=seconds)"
+printf 'LOG_FILE=%s\n' "${LOG_FILE}"

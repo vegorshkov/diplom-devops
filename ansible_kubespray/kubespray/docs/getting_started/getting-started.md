@@ -1,32 +1,42 @@
 # Getting started
 
-## Install ansible
-
-Install Ansible according to [Ansible installation guide](/docs/ansible/ansible.md#installing-ansible).
-
 ## Building your own inventory
 
-Ansible inventory can be stored in 3 formats: YAML, JSON, or INI-like. See the
-[example inventory](/inventory/sample/inventory.ini)
-and [Ansible documentation on building your inventory](https://docs.ansible.com/ansible/latest/inventory_guide/intro_inventory.html),
-and [details on the inventory structure expected by Kubespray](/docs/ansible/inventory.md).
+Ansible inventory can be stored in 3 formats: YAML, JSON, or INI-like. There is
+an example inventory located
+[here](https://github.com/kubernetes-sigs/kubespray/blob/master/inventory/sample/inventory.ini).
+
+You can use an
+[inventory generator](https://github.com/kubernetes-sigs/kubespray/blob/master/contrib/inventory_builder/inventory.py)
+to create or modify an Ansible inventory. Currently, it is limited in
+functionality and is only used for configuring a basic Kubespray cluster inventory, but it does
+support creating inventory file for large clusters as well. It now supports
+separated ETCD and Kubernetes control plane roles from node role if the size exceeds a
+certain threshold. Run `python3 contrib/inventory_builder/inventory.py help` for more information.
+
+Example inventory generator usage:
 
 ```ShellSession
-<your-favorite-editor> inventory/mycluster/inventory.ini
-
-# Review and change parameters under ``inventory/mycluster/group_vars``
-<your-favorite-editor> inventory/mycluster/group_vars/all.yml # for every node, including etcd
-<your-favorite-editor> inventory/mycluster/group_vars/k8s_cluster.yml # for every node in the cluster (not etcd when it's separate)
-<your-favorite-editor> inventory/mycluster/group_vars/kube_control_plane.yml # for the control plane
-<your-favorite-editor> inventory/myclsuter/group_vars/kube_node.yml # for worker nodes
+cp -r inventory/sample inventory/mycluster
+declare -a IPS=(10.10.1.3 10.10.1.4 10.10.1.5)
+CONFIG_FILE=inventory/mycluster/hosts.yml python3 contrib/inventory_builder/inventory.py ${IPS[@]}
 ```
 
-## Installing the cluster
+Then use `inventory/mycluster/hosts.yml` as inventory file.
+
+## Starting custom deployment
+
+Once you have an inventory, you may want to customize deployment data vars
+and start the deployment:
+
+**IMPORTANT**: Edit my\_inventory/groups\_vars/\*.yaml to override data vars:
 
 ```ShellSession
-ansible-playbook -i inventory/mycluster/ cluster.yml -b -v \
+ansible-playbook -i inventory/mycluster/hosts.yml cluster.yml -b -v \
   --private-key=~/.ssh/private_key
 ```
+
+See more details in the [ansible guide](/docs/ansible/ansible.md).
 
 ### Adding nodes
 
@@ -59,8 +69,6 @@ ansible-playbook -i inventory/mycluster/hosts.yml remove-node.yml -b -v \
 --extra-vars "node=nodename,nodename2"
 ```
 
-> Note: The playbook does not currently support the removal of the first control plane or etcd node. These nodes are essential for maintaining cluster operations and must remain intact.
-
 If a node is completely unreachable by ssh, add `--extra-vars reset_nodes=false`
 to skip the node reset step. If one node is unavailable, but others you wish
 to remove are able to connect via SSH, you could set `reset_nodes=false` as a host
@@ -82,6 +90,32 @@ authentication. One can get a kubeconfig from kube_control_plane hosts
 
 For more information on kubeconfig and accessing a Kubernetes cluster, refer to
 the Kubernetes [documentation](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/).
+
+## Accessing Kubernetes Dashboard
+
+Supported version is kubernetes-dashboard v2.0.x :
+
+- Login option : token/kubeconfig by default
+- Deployed by default in "kube-system" namespace, can be overridden with `dashboard_namespace: kubernetes-dashboard` in inventory,
+- Only serves over https
+
+Access is described in [dashboard docs](https://github.com/kubernetes/dashboard/tree/master/docs/user/accessing-dashboard). With kubespray's default deployment in kube-system namespace, instead of kubernetes-dashboard :
+
+- Proxy URL is <http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#/login>
+- kubectl commands must be run with "-n kube-system"
+
+Accessing through Ingress is highly recommended. For proxy access, please note that proxy must listen to [localhost](https://github.com/kubernetes/dashboard/issues/692#issuecomment-220492484) (`proxy  --address="x.x.x.x"` will not work)
+
+For token authentication, guide to create Service Account is provided in [dashboard sample user](https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md) doc. Still take care of default namespace.
+
+Access can also by achieved via ssh tunnel on a control plane :
+
+```bash
+# localhost:8081 will be sent to control-plane-1's own localhost:8081
+ssh -L8001:localhost:8001 user@control-plane-1
+sudo -i
+kubectl proxy
+```
 
 ## Accessing Kubernetes API
 
