@@ -1,4 +1,4 @@
-# bootstrap-os
+# bootstrap_os
 
 Bootstrap an Ansible host to be able to run Ansible modules.
 
@@ -40,10 +40,6 @@ Variables are listed with their default values, if applicable.
 * `centos_fastestmirror_enabled: false`
   Whether the [fastestmirror](https://wiki.centos.org/PackageManagement/Yum/FastestMirror) yum plugin should be enabled.
 
-## Dependencies
-
-The `kubespray-defaults` role is expected to be run before this role.
-
 ## Example Playbook
 
 Remember to disable fact gathering since Python might not be present on hosts.
@@ -52,8 +48,8 @@ Remember to disable fact gathering since Python might not be present on hosts.
 - hosts: all
   gather_facts: false  # not all hosts might be able to run modules yet
   roles:
-    - kubespray-defaults
-    - bootstrap-os
+    - kubespray_defaults
+    - bootstrap_os
 ```
 
 ## License

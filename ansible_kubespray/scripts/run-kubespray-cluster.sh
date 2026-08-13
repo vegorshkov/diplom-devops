@@ -19,22 +19,22 @@ PROJECT_VARS_FILE="${INVENTORY_GROUP_VARS_DIR}/k8s_cluster/z2026-diplom.yml"
 
 EXPECTED_CONTROL_PLANE=(
     "k8s-master-ru-central1-a"
-    "k8s-master-ru-central1-b"
+    "k8s-master-ru-central1-e"
     "k8s-master-ru-central1-d"
 )
 
 EXPECTED_WORKERS=(
     "k8s-worker-ru-central1-a"
-    "k8s-worker-ru-central1-b"
+    "k8s-worker-ru-central1-e"
     "k8s-worker-ru-central1-d"
 )
 
 EXPECTED_CLUSTER_HOSTS=(
     "k8s-master-ru-central1-a"
-    "k8s-master-ru-central1-b"
+    "k8s-master-ru-central1-e"
     "k8s-master-ru-central1-d"
     "k8s-worker-ru-central1-a"
-    "k8s-worker-ru-central1-b"
+    "k8s-worker-ru-central1-e"
     "k8s-worker-ru-central1-d"
 )
 
@@ -256,13 +256,13 @@ with open(inventory_path, encoding="utf-8") as source:
 
 expected_control_plane = {
     "k8s-master-ru-central1-a",
-    "k8s-master-ru-central1-b",
+    "k8s-master-ru-central1-e",
     "k8s-master-ru-central1-d",
 }
 
 expected_workers = {
     "k8s-worker-ru-central1-a",
-    "k8s-worker-ru-central1-b",
+    "k8s-worker-ru-central1-e",
     "k8s-worker-ru-central1-d",
 }
 

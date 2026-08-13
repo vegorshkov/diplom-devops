@@ -1,27 +1,27 @@
 all:
   hosts:
     k8s-master-ru-central1-a:
-    k8s-master-ru-central1-b:
     k8s-master-ru-central1-d:
+    k8s-master-ru-central1-e:
     k8s-worker-ru-central1-a:
-    k8s-worker-ru-central1-b:
     k8s-worker-ru-central1-d:
+    k8s-worker-ru-central1-e:
   children:
     kube_control_plane:
       hosts:
         k8s-master-ru-central1-a:
-        k8s-master-ru-central1-b:
         k8s-master-ru-central1-d:
+        k8s-master-ru-central1-e:
     kube_node:
       hosts:
         k8s-worker-ru-central1-a:
-        k8s-worker-ru-central1-b:
         k8s-worker-ru-central1-d:
+        k8s-worker-ru-central1-e:
     etcd:
       hosts:
         k8s-master-ru-central1-a:
-        k8s-master-ru-central1-b:
         k8s-master-ru-central1-d:
+        k8s-master-ru-central1-e:
     k8s_cluster:
       children:
         kube_control_plane:

@@ -75,3 +75,4 @@ authorized_key_terraform_state.json
 
 
 terraform_infra/archive/
+terraform.tfvars

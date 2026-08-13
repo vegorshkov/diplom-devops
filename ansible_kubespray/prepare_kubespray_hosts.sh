@@ -140,20 +140,20 @@ cat > "${PLAYBOOK_FILE}" << 'ANSIBLE_PLAYBOOK_EOF'
   vars:
     expected_hosts:
       - k8s-master-ru-central1-a
-      - k8s-master-ru-central1-b
+      - k8s-master-ru-central1-e
       - k8s-master-ru-central1-d
       - k8s-worker-ru-central1-a
-      - k8s-worker-ru-central1-b
+      - k8s-worker-ru-central1-e
       - k8s-worker-ru-central1-d
 
     expected_control_plane_hosts:
       - k8s-master-ru-central1-a
-      - k8s-master-ru-central1-b
+      - k8s-master-ru-central1-e
       - k8s-master-ru-central1-d
 
     expected_worker_hosts:
       - k8s-worker-ru-central1-a
-      - k8s-worker-ru-central1-b
+      - k8s-worker-ru-central1-e
       - k8s-worker-ru-central1-d
 
   tasks:

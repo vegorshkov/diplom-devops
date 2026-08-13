@@ -1,0 +1,1455 @@
+
+PLAY [Check Ansible version] ***************************************************
+Четверг 13 августа 2026  00:05:13 +0300 (0:00:00.022)       0:00:00.022 ******* 
+
+TASK [Check 2.18.0 <= Ansible version < 2.19.0] ********************************
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:13 +0300 (0:00:00.040)       0:00:00.063 ******* 
+
+TASK [Check that python netaddr is installed] **********************************
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:13 +0300 (0:00:00.092)       0:00:00.155 ******* 
+
+TASK [Check that jinja is not too old (install via pip)] ***********************
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+PLAY [Inventory setup and validation] ******************************************
+Четверг 13 августа 2026  00:05:13 +0300 (0:00:00.041)       0:00:00.197 ******* 
+
+TASK [dynamic_groups : Match needed groups by their old names or definition] ***
+ok: [k8s-master-ru-central1-a] => (item={'key': 'k8s_cluster', 'value': ['kube_node', 'kube_control_plane', 'calico_rr']})
+ok: [k8s-worker-ru-central1-d] => (item={'key': 'k8s_cluster', 'value': ['kube_node', 'kube_control_plane', 'calico_rr']})
+ok: [k8s-worker-ru-central1-a] => (item={'key': 'k8s_cluster', 'value': ['kube_node', 'kube_control_plane', 'calico_rr']})
+ok: [k8s-master-ru-central1-d] => (item={'key': 'k8s_cluster', 'value': ['kube_node', 'kube_control_plane', 'calico_rr']})
+ok: [k8s-worker-ru-central1-e] => (item={'key': 'k8s_cluster', 'value': ['kube_node', 'kube_control_plane', 'calico_rr']})
+ok: [k8s-master-ru-central1-e] => (item={'key': 'k8s_cluster', 'value': ['kube_node', 'kube_control_plane', 'calico_rr']})
+Четверг 13 августа 2026  00:05:13 +0300 (0:00:00.240)       0:00:00.437 ******* 
+
+TASK [validate_inventory : Fail if removed variables are used] *****************
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.050)       0:00:00.488 ******* 
+
+TASK [validate_inventory : Stop if kube_control_plane group is empty] **********
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.034)       0:00:00.522 ******* 
+
+TASK [validate_inventory : Stop if etcd group is empty in external etcd mode] ***
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.035)       0:00:00.558 ******* 
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.108)       0:00:00.666 ******* 
+
+TASK [validate_inventory : Stop if unsupported version of Kubernetes] **********
+ok: [k8s-master-ru-central1-b] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.170)       0:00:00.836 ******* 
+
+TASK [validate_inventory : Stop if known booleans are set as strings (Use JSON format on CLI: -e "{'key': true }")] ***
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.043)       0:00:00.880 ******* 
+
+TASK [validate_inventory : Stop if even number of etcd hosts] ******************
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.041)       0:00:00.922 ******* 
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.091)       0:00:01.013 ******* 
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.090)       0:00:01.104 ******* 
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.088)       0:00:01.192 ******* 
+
+TASK [validate_inventory : Check that kube_service_addresses is a network range] ***
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.073)       0:00:01.266 ******* 
+
+TASK [validate_inventory : Check that kube_pods_subnet is a network range] *****
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.076)       0:00:01.343 ******* 
+
+TASK [validate_inventory : Check that kube_pods_subnet does not collide with kube_service_addresses] ***
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.083)       0:00:01.427 ******* 
+Четверг 13 августа 2026  00:05:14 +0300 (0:00:00.030)       0:00:01.458 ******* 
+Четверг 13 августа 2026  00:05:15 +0300 (0:00:00.033)       0:00:01.491 ******* 
+Четверг 13 августа 2026  00:05:15 +0300 (0:00:00.032)       0:00:01.523 ******* 
+Четверг 13 августа 2026  00:05:15 +0300 (0:00:00.032)       0:00:01.555 ******* 
+Четверг 13 августа 2026  00:05:15 +0300 (0:00:00.027)       0:00:01.583 ******* 
+
+TASK [validate_inventory : Stop if unsupported options selected] ***************
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:15 +0300 (0:00:00.052)       0:00:01.635 ******* 
+
+TASK [validate_inventory : Warn if `enable_dual_stack_networks` is set] ********
+ok: [k8s-master-ru-central1-a] => {
+    "msg": "WARNING! => `enable_dual_stack_networks` deprecation. Please switch to using ipv4_stack and ipv6_stack."
+}
+ok: [k8s-master-ru-central1-d] => {
+    "msg": "WARNING! => `enable_dual_stack_networks` deprecation. Please switch to using ipv4_stack and ipv6_stack."
+}
+ok: [k8s-worker-ru-central1-a] => {
+    "msg": "WARNING! => `enable_dual_stack_networks` deprecation. Please switch to using ipv4_stack and ipv6_stack."
+}
+ok: [k8s-worker-ru-central1-d] => {
+    "msg": "WARNING! => `enable_dual_stack_networks` deprecation. Please switch to using ipv4_stack and ipv6_stack."
+}
+ok: [k8s-worker-ru-central1-e] => {
+    "msg": "WARNING! => `enable_dual_stack_networks` deprecation. Please switch to using ipv4_stack and ipv6_stack."
+}
+ok: [k8s-master-ru-central1-e] => {
+    "msg": "WARNING! => `enable_dual_stack_networks` deprecation. Please switch to using ipv4_stack and ipv6_stack."
+}
+Четверг 13 августа 2026  00:05:15 +0300 (0:00:00.117)       0:00:01.753 ******* 
+Четверг 13 августа 2026  00:05:15 +0300 (0:00:00.088)       0:00:01.842 ******* 
+Четверг 13 августа 2026  00:05:15 +0300 (0:00:00.086)       0:00:01.928 ******* 
+Четверг 13 августа 2026  00:05:15 +0300 (0:00:00.088)       0:00:02.016 ******* 
+
+TASK [validate_inventory : Ensure minimum containerd version] ******************
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:05:15 +0300 (0:00:00.040)       0:00:02.056 ******* 
+Четверг 13 августа 2026  00:05:15 +0300 (0:00:00.083)       0:00:02.140 ******* 
+
+TASK [validate_inventory : Download_file | Check if requested Kubernetes are supported] ***
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+[WARNING]: Could not match supplied host pattern, ignoring: bastion
+[WARNING]: Could not match supplied host pattern, ignoring: calico_rr
+ok: [k8s-master-ru-central1-b] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+PLAY [Install bastion ssh config] **********************************************
+skipping: no hosts matched
+
+PLAY [Bootstrap hosts for Ansible] *********************************************
+Четверг 13 августа 2026  00:05:15 +0300 (0:00:00.196)       0:00:02.337 ******* 
+[WARNING]: raw module does not support the environment keyword
+
+TASK [bootstrap_os : Fetch /etc/os-release] ************************************
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:05:18 +0300 (0:00:02.983)       0:00:05.320 ******* 
+Четверг 13 августа 2026  00:05:18 +0300 (0:00:00.164)       0:00:05.485 ******* 
+
+TASK [bootstrap_os : Include tasks] ********************************************
+included: /home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/kubespray/roles/bootstrap_os/tasks/ubuntu.yml for k8s-master-ru-central1-a, k8s-master-ru-central1-d, k8s-master-ru-central1-e, k8s-worker-ru-central1-a, k8s-worker-ru-central1-d, k8s-worker-ru-central1-e => (item=/home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/kubespray/roles/bootstrap_os/tasks/ubuntu.yml)
+Четверг 13 августа 2026  00:05:19 +0300 (0:00:00.189)       0:00:05.675 ******* 
+
+TASK [bootstrap_os : Check if bootstrap is needed] *****************************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:05:19 +0300 (0:00:00.295)       0:00:05.970 ******* 
+
+TASK [bootstrap_os : Check http::proxy in apt configuration files] *************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:05:19 +0300 (0:00:00.297)       0:00:06.268 ******* 
+Четверг 13 августа 2026  00:05:19 +0300 (0:00:00.083)       0:00:06.351 ******* 
+
+TASK [bootstrap_os : Check https::proxy in apt configuration files] ************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:05:20 +0300 (0:00:00.283)       0:00:06.635 ******* 
+Четверг 13 августа 2026  00:05:20 +0300 (0:00:00.083)       0:00:06.719 ******* 
+Четверг 13 августа 2026  00:05:20 +0300 (0:00:00.078)       0:00:06.798 ******* 
+Четверг 13 августа 2026  00:05:20 +0300 (0:00:00.082)       0:00:06.880 ******* 
+Четверг 13 августа 2026  00:05:20 +0300 (0:00:00.094)       0:00:06.975 ******* 
+Четверг 13 августа 2026  00:05:20 +0300 (0:00:00.079)       0:00:07.054 ******* 
+[WARNING]: Platform linux on host k8s-master-ru-central1-e is using the
+discovered Python interpreter at /usr/bin/python3.10, but future installation
+of another Python interpreter could change the meaning of that path. See
+https://docs.ansible.com/ansible-
+core/2.18/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Platform linux on host k8s-worker-ru-central1-a is using the
+discovered Python interpreter at /usr/bin/python3.10, but future installation
+of another Python interpreter could change the meaning of that path. See
+https://docs.ansible.com/ansible-
+core/2.18/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Platform linux on host k8s-worker-ru-central1-d is using the
+discovered Python interpreter at /usr/bin/python3.10, but future installation
+of another Python interpreter could change the meaning of that path. See
+https://docs.ansible.com/ansible-
+core/2.18/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Platform linux on host k8s-master-ru-central1-d is using the
+discovered Python interpreter at /usr/bin/python3.10, but future installation
+of another Python interpreter could change the meaning of that path. See
+https://docs.ansible.com/ansible-
+core/2.18/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Platform linux on host k8s-master-ru-central1-a is using the
+discovered Python interpreter at /usr/bin/python3.10, but future installation
+of another Python interpreter could change the meaning of that path. See
+https://docs.ansible.com/ansible-
+core/2.18/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Platform linux on host k8s-worker-ru-central1-e is using the
+discovered Python interpreter at /usr/bin/python3.10, but future installation
+of another Python interpreter could change the meaning of that path. See
+https://docs.ansible.com/ansible-
+core/2.18/reference_appendices/interpreter_discovery.html for more information.
+
+TASK [system_packages : Gather OS information] *********************************
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:05:22 +0300 (0:00:02.243)       0:00:09.298 ******* 
+Четверг 13 августа 2026  00:05:22 +0300 (0:00:00.087)       0:00:09.385 ******* 
+Четверг 13 августа 2026  00:05:22 +0300 (0:00:00.089)       0:00:09.474 ******* 
+Четверг 13 августа 2026  00:05:23 +0300 (0:00:00.087)       0:00:09.562 ******* 
+Четверг 13 августа 2026  00:05:23 +0300 (0:00:00.090)       0:00:09.653 ******* 
+
+TASK [system_packages : Manage packages] ***************************************
+changed: [k8s-master-ru-central1-e] => (item=install)
+changed: [k8s-master-ru-central1-a] => (item=install)
+changed: [k8s-master-ru-central1-d] => (item=install)
+changed: [k8s-worker-ru-central1-a] => (item=install)
+changed: [k8s-worker-ru-central1-d] => (item=install)
+changed: [k8s-worker-ru-central1-e] => (item=install)
+Четверг 13 августа 2026  00:06:14 +0300 (0:00:50.881)       0:01:00.534 ******* 
+
+TASK [bootstrap_os : Create remote_tmp for it is used by another module] *******
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:15 +0300 (0:00:00.993)       0:01:01.528 ******* 
+
+TASK [bootstrap_os : Gather facts] *********************************************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:16 +0300 (0:00:01.436)       0:01:02.964 ******* 
+
+TASK [bootstrap_os : Assign inventory name to unconfigured hostnames (non-CoreOS, non-Flatcar, Suse and ClearLinux, non-Fedora)] ***
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:18 +0300 (0:00:01.625)       0:01:04.589 ******* 
+
+TASK [bootstrap_os : Ensure bash_completion.d folder exists] *******************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+
+PLAY [Gather facts] ************************************************************
+Четверг 13 августа 2026  00:06:18 +0300 (0:00:00.776)       0:01:05.366 ******* 
+
+TASK [network_facts : Gather node IPs] *****************************************
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:20 +0300 (0:00:01.375)       0:01:06.742 ******* 
+
+TASK [network_facts : Set computed IPs variables] ******************************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:20 +0300 (0:00:00.164)       0:01:06.907 ******* 
+Четверг 13 августа 2026  00:06:20 +0300 (0:00:00.045)       0:01:06.953 ******* 
+
+TASK [Gather minimal facts] ****************************************************
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:21 +0300 (0:00:01.230)       0:01:08.183 ******* 
+
+TASK [Gather necessary facts (network)] ****************************************
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:23 +0300 (0:00:01.322)       0:01:09.506 ******* 
+
+TASK [Gather necessary facts (hardware)] ***************************************
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+
+PLAY [Prepare for etcd install] ************************************************
+Четверг 13 августа 2026  00:06:25 +0300 (0:00:02.045)       0:01:11.552 ******* 
+
+TASK [adduser : User | Create User Group] **************************************
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:26 +0300 (0:00:01.329)       0:01:12.881 ******* 
+
+TASK [adduser : User | Create User] ********************************************
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-e]
+changed: [k8s-master-ru-central1-a]
+Четверг 13 августа 2026  00:06:29 +0300 (0:00:03.088)       0:01:15.970 ******* 
+
+TASK [kubernetes/preinstall : Check if /etc/fstab exists] **********************
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:30 +0300 (0:00:00.879)       0:01:16.849 ******* 
+
+TASK [kubernetes/preinstall : Remove swapfile from /etc/fstab] *****************
+ok: [k8s-master-ru-central1-e] => (item=swap)
+ok: [k8s-worker-ru-central1-a] => (item=swap)
+ok: [k8s-master-ru-central1-a] => (item=swap)
+ok: [k8s-master-ru-central1-d] => (item=swap)
+ok: [k8s-worker-ru-central1-d] => (item=swap)
+ok: [k8s-master-ru-central1-e] => (item=none)
+ok: [k8s-worker-ru-central1-a] => (item=none)
+ok: [k8s-master-ru-central1-a] => (item=none)
+ok: [k8s-worker-ru-central1-d] => (item=none)
+ok: [k8s-master-ru-central1-d] => (item=none)
+ok: [k8s-worker-ru-central1-e] => (item=swap)
+ok: [k8s-worker-ru-central1-e] => (item=none)
+Четверг 13 августа 2026  00:06:31 +0300 (0:00:01.609)       0:01:18.458 ******* 
+
+TASK [kubernetes/preinstall : Mask swap.target (persist swapoff)] **************
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-worker-ru-central1-e]
+changed: [k8s-master-ru-central1-d]
+Четверг 13 августа 2026  00:06:36 +0300 (0:00:04.034)       0:01:22.493 ******* 
+
+TASK [kubernetes/preinstall : Disable swap] ************************************
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:36 +0300 (0:00:00.851)       0:01:23.345 ******* 
+Четверг 13 августа 2026  00:06:36 +0300 (0:00:00.116)       0:01:23.461 ******* 
+
+TASK [kubernetes/preinstall : Check resolvconf] ********************************
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:37 +0300 (0:00:00.736)       0:01:24.198 ******* 
+
+TASK [kubernetes/preinstall : Check existence of /etc/resolvconf/resolv.conf.d] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:38 +0300 (0:00:00.686)       0:01:24.884 ******* 
+
+TASK [kubernetes/preinstall : Check status of /etc/resolv.conf] ****************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:39 +0300 (0:00:00.684)       0:01:25.569 ******* 
+
+TASK [kubernetes/preinstall : Fetch resolv.conf] *******************************
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:39 +0300 (0:00:00.791)       0:01:26.360 ******* 
+
+TASK [kubernetes/preinstall : NetworkManager | Check if host has NetworkManager] ***
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:40 +0300 (0:00:00.673)       0:01:27.034 ******* 
+
+TASK [kubernetes/preinstall : Check systemd-resolved] **************************
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:41 +0300 (0:00:00.695)       0:01:27.730 ******* 
+
+TASK [kubernetes/preinstall : Set default dns if remove_default_searchdomains is false] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:41 +0300 (0:00:00.134)       0:01:27.864 ******* 
+
+TASK [kubernetes/preinstall : Set dns facts] ***********************************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:41 +0300 (0:00:00.146)       0:01:28.011 ******* 
+
+TASK [kubernetes/preinstall : Check if kubelet is configured] ******************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:42 +0300 (0:00:00.715)       0:01:28.727 ******* 
+
+TASK [kubernetes/preinstall : Check if early DNS configuration stage] **********
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:42 +0300 (0:00:00.128)       0:01:28.855 ******* 
+
+TASK [kubernetes/preinstall : Target resolv.conf files] ************************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:42 +0300 (0:00:00.129)       0:01:28.985 ******* 
+Четверг 13 августа 2026  00:06:42 +0300 (0:00:00.099)       0:01:29.084 ******* 
+
+TASK [kubernetes/preinstall : Check if /etc/dhclient.conf exists] **************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:43 +0300 (0:00:00.690)       0:01:29.775 ******* 
+Четверг 13 августа 2026  00:06:43 +0300 (0:00:00.095)       0:01:29.871 ******* 
+
+TASK [kubernetes/preinstall : Check if /etc/dhcp/dhclient.conf exists] *********
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+ok: [k8s-worker-ru-central1-d]
+Четверг 13 августа 2026  00:06:46 +0300 (0:00:03.080)       0:01:32.951 ******* 
+
+TASK [kubernetes/preinstall : Target dhclient conf file for /etc/dhcp/dhclient.conf] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:46 +0300 (0:00:00.132)       0:01:33.084 ******* 
+Четверг 13 августа 2026  00:06:46 +0300 (0:00:00.092)       0:01:33.177 ******* 
+
+TASK [kubernetes/preinstall : Target dhclient hook file for Debian family] *****
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:46 +0300 (0:00:00.136)       0:01:33.314 ******* 
+Четверг 13 августа 2026  00:06:46 +0300 (0:00:00.098)       0:01:33.413 ******* 
+
+TASK [kubernetes/preinstall : Check /usr readonly] *****************************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:47 +0300 (0:00:00.713)       0:01:34.126 ******* 
+Четверг 13 августа 2026  00:06:47 +0300 (0:00:00.096)       0:01:34.223 ******* 
+Четверг 13 августа 2026  00:06:47 +0300 (0:00:00.034)       0:01:34.258 ******* 
+
+TASK [kubernetes/preinstall : Stop if non systemd OS type] *********************
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:06:47 +0300 (0:00:00.130)       0:01:34.389 ******* 
+
+TASK [kubernetes/preinstall : Stop if the os does not support] *****************
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:06:48 +0300 (0:00:00.143)       0:01:34.533 ******* 
+
+TASK [kubernetes/preinstall : Stop if memory is too small for control plane nodes] ***
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:06:48 +0300 (0:00:00.112)       0:01:34.645 ******* 
+
+TASK [kubernetes/preinstall : Stop if memory is too small for nodes] ***********
+ok: [k8s-worker-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:06:48 +0300 (0:00:00.117)       0:01:34.763 ******* 
+
+TASK [kubernetes/preinstall : Stop if cgroups are not enabled on nodes] ********
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:48 +0300 (0:00:00.715)       0:01:35.478 ******* 
+Четверг 13 августа 2026  00:06:49 +0300 (0:00:00.116)       0:01:35.594 ******* 
+
+TASK [kubernetes/preinstall : Stop if access_ip is not pingable] ***************
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:49 +0300 (0:00:00.734)       0:01:36.329 ******* 
+Четверг 13 августа 2026  00:06:49 +0300 (0:00:00.095)       0:01:36.425 ******* 
+Четверг 13 августа 2026  00:06:50 +0300 (0:00:00.101)       0:01:36.527 ******* 
+
+TASK [kubernetes/preinstall : Stop if bad hostname] ****************************
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:06:50 +0300 (0:00:00.145)       0:01:36.672 ******* 
+
+TASK [kubernetes/preinstall : Stop if /etc/resolv.conf has no configured nameservers] ***
+ok: [k8s-master-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-master-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-d] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [k8s-worker-ru-central1-e] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:06:50 +0300 (0:00:00.259)       0:01:36.932 ******* 
+Четверг 13 августа 2026  00:06:50 +0300 (0:00:00.098)       0:01:37.031 ******* 
+
+TASK [kubernetes/preinstall : Create kubernetes directories] *******************
+changed: [k8s-master-ru-central1-a] => (item=/etc/kubernetes)
+changed: [k8s-master-ru-central1-e] => (item=/etc/kubernetes)
+changed: [k8s-worker-ru-central1-a] => (item=/etc/kubernetes)
+changed: [k8s-master-ru-central1-d] => (item=/etc/kubernetes)
+changed: [k8s-worker-ru-central1-d] => (item=/etc/kubernetes)
+changed: [k8s-master-ru-central1-e] => (item=/etc/kubernetes/manifests)
+changed: [k8s-master-ru-central1-a] => (item=/etc/kubernetes/manifests)
+changed: [k8s-worker-ru-central1-a] => (item=/etc/kubernetes/manifests)
+changed: [k8s-worker-ru-central1-d] => (item=/etc/kubernetes/manifests)
+changed: [k8s-master-ru-central1-d] => (item=/etc/kubernetes/manifests)
+changed: [k8s-master-ru-central1-e] => (item=/usr/local/bin/kubernetes-scripts)
+changed: [k8s-worker-ru-central1-a] => (item=/usr/local/bin/kubernetes-scripts)
+changed: [k8s-master-ru-central1-a] => (item=/usr/local/bin/kubernetes-scripts)
+changed: [k8s-worker-ru-central1-d] => (item=/usr/local/bin/kubernetes-scripts)
+changed: [k8s-master-ru-central1-d] => (item=/usr/local/bin/kubernetes-scripts)
+changed: [k8s-master-ru-central1-e] => (item=/usr/libexec/kubernetes/kubelet-plugins/volume/exec)
+changed: [k8s-worker-ru-central1-a] => (item=/usr/libexec/kubernetes/kubelet-plugins/volume/exec)
+changed: [k8s-master-ru-central1-a] => (item=/usr/libexec/kubernetes/kubelet-plugins/volume/exec)
+changed: [k8s-worker-ru-central1-d] => (item=/usr/libexec/kubernetes/kubelet-plugins/volume/exec)
+changed: [k8s-master-ru-central1-d] => (item=/usr/libexec/kubernetes/kubelet-plugins/volume/exec)
+changed: [k8s-worker-ru-central1-e] => (item=/etc/kubernetes)
+changed: [k8s-worker-ru-central1-e] => (item=/etc/kubernetes/manifests)
+changed: [k8s-worker-ru-central1-e] => (item=/usr/local/bin/kubernetes-scripts)
+changed: [k8s-worker-ru-central1-e] => (item=/usr/libexec/kubernetes/kubelet-plugins/volume/exec)
+Четверг 13 августа 2026  00:06:53 +0300 (0:00:02.507)       0:01:39.539 ******* 
+
+TASK [kubernetes/preinstall : Create other directories of root owner] **********
+changed: [k8s-master-ru-central1-a] => (item=/etc/kubernetes/ssl)
+changed: [k8s-master-ru-central1-e] => (item=/etc/kubernetes/ssl)
+changed: [k8s-worker-ru-central1-a] => (item=/etc/kubernetes/ssl)
+changed: [k8s-worker-ru-central1-d] => (item=/etc/kubernetes/ssl)
+changed: [k8s-master-ru-central1-d] => (item=/etc/kubernetes/ssl)
+ok: [k8s-master-ru-central1-a] => (item=/usr/local/bin)
+ok: [k8s-master-ru-central1-e] => (item=/usr/local/bin)
+ok: [k8s-worker-ru-central1-a] => (item=/usr/local/bin)
+ok: [k8s-worker-ru-central1-d] => (item=/usr/local/bin)
+ok: [k8s-master-ru-central1-d] => (item=/usr/local/bin)
+changed: [k8s-worker-ru-central1-e] => (item=/etc/kubernetes/ssl)
+ok: [k8s-worker-ru-central1-e] => (item=/usr/local/bin)
+Четверг 13 августа 2026  00:06:54 +0300 (0:00:01.330)       0:01:40.869 ******* 
+
+TASK [kubernetes/preinstall : Check if kubernetes kubeadm compat cert dir exists] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:55 +0300 (0:00:00.707)       0:01:41.577 ******* 
+
+TASK [kubernetes/preinstall : Create kubernetes kubeadm compat cert dir (kubernetes/kubeadm issue 1498)] ***
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:55 +0300 (0:00:00.724)       0:01:42.301 ******* 
+
+TASK [kubernetes/preinstall : Create cni directories] **************************
+changed: [k8s-master-ru-central1-a] => (item=/etc/cni/net.d)
+changed: [k8s-master-ru-central1-e] => (item=/etc/cni/net.d)
+changed: [k8s-worker-ru-central1-a] => (item=/etc/cni/net.d)
+changed: [k8s-master-ru-central1-d] => (item=/etc/cni/net.d)
+changed: [k8s-worker-ru-central1-d] => (item=/etc/cni/net.d)
+changed: [k8s-master-ru-central1-e] => (item=/opt/cni/bin)
+changed: [k8s-master-ru-central1-a] => (item=/opt/cni/bin)
+changed: [k8s-worker-ru-central1-a] => (item=/opt/cni/bin)
+changed: [k8s-worker-ru-central1-d] => (item=/opt/cni/bin)
+changed: [k8s-master-ru-central1-d] => (item=/opt/cni/bin)
+changed: [k8s-worker-ru-central1-e] => (item=/etc/cni/net.d)
+changed: [k8s-worker-ru-central1-e] => (item=/opt/cni/bin)
+Четверг 13 августа 2026  00:06:57 +0300 (0:00:01.324)       0:01:43.625 ******* 
+
+TASK [kubernetes/preinstall : Create calico cni directories] *******************
+changed: [k8s-master-ru-central1-a] => (item=/var/lib/calico)
+changed: [k8s-master-ru-central1-e] => (item=/var/lib/calico)
+changed: [k8s-master-ru-central1-d] => (item=/var/lib/calico)
+changed: [k8s-worker-ru-central1-a] => (item=/var/lib/calico)
+changed: [k8s-worker-ru-central1-d] => (item=/var/lib/calico)
+changed: [k8s-worker-ru-central1-e] => (item=/var/lib/calico)
+Четверг 13 августа 2026  00:06:57 +0300 (0:00:00.753)       0:01:44.379 ******* 
+Четверг 13 августа 2026  00:06:58 +0300 (0:00:00.125)       0:01:44.504 ******* 
+Четверг 13 августа 2026  00:06:58 +0300 (0:00:00.100)       0:01:44.605 ******* 
+Четверг 13 августа 2026  00:06:58 +0300 (0:00:00.103)       0:01:44.709 ******* 
+Четверг 13 августа 2026  00:06:58 +0300 (0:00:00.171)       0:01:44.880 ******* 
+Четверг 13 августа 2026  00:06:58 +0300 (0:00:00.167)       0:01:45.048 ******* 
+Четверг 13 августа 2026  00:06:58 +0300 (0:00:00.114)       0:01:45.162 ******* 
+Четверг 13 августа 2026  00:06:58 +0300 (0:00:00.112)       0:01:45.275 ******* 
+
+TASK [kubernetes/preinstall : Create systemd-resolved drop-in directory] *******
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:06:59 +0300 (0:00:00.764)       0:01:46.039 ******* 
+
+TASK [kubernetes/preinstall : Write Kubespray DNS settings to systemd-resolved] ***
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:02 +0300 (0:00:02.811)       0:01:48.851 ******* 
+Четверг 13 августа 2026  00:07:02 +0300 (0:00:00.097)       0:01:48.949 ******* 
+Четверг 13 августа 2026  00:07:02 +0300 (0:00:00.095)       0:01:49.044 ******* 
+Четверг 13 августа 2026  00:07:02 +0300 (0:00:00.095)       0:01:49.139 ******* 
+Четверг 13 августа 2026  00:07:02 +0300 (0:00:00.105)       0:01:49.245 ******* 
+Четверг 13 августа 2026  00:07:02 +0300 (0:00:00.104)       0:01:49.349 ******* 
+Четверг 13 августа 2026  00:07:02 +0300 (0:00:00.098)       0:01:49.448 ******* 
+Четверг 13 августа 2026  00:07:03 +0300 (0:00:00.112)       0:01:49.560 ******* 
+Четверг 13 августа 2026  00:07:03 +0300 (0:00:00.098)       0:01:49.658 ******* 
+Четверг 13 августа 2026  00:07:03 +0300 (0:00:00.096)       0:01:49.755 ******* 
+Четверг 13 августа 2026  00:07:03 +0300 (0:00:00.101)       0:01:49.856 ******* 
+
+TASK [kubernetes/preinstall : Clean previously used sysctl file locations] *****
+ok: [k8s-master-ru-central1-a] => (item=ipv4-ip_forward.conf)
+ok: [k8s-master-ru-central1-e] => (item=ipv4-ip_forward.conf)
+ok: [k8s-master-ru-central1-d] => (item=ipv4-ip_forward.conf)
+ok: [k8s-worker-ru-central1-a] => (item=ipv4-ip_forward.conf)
+ok: [k8s-worker-ru-central1-d] => (item=ipv4-ip_forward.conf)
+ok: [k8s-master-ru-central1-e] => (item=bridge-nf-call.conf)
+ok: [k8s-master-ru-central1-a] => (item=bridge-nf-call.conf)
+ok: [k8s-worker-ru-central1-a] => (item=bridge-nf-call.conf)
+ok: [k8s-master-ru-central1-d] => (item=bridge-nf-call.conf)
+ok: [k8s-worker-ru-central1-d] => (item=bridge-nf-call.conf)
+ok: [k8s-worker-ru-central1-e] => (item=ipv4-ip_forward.conf)
+ok: [k8s-worker-ru-central1-e] => (item=bridge-nf-call.conf)
+Четверг 13 августа 2026  00:07:04 +0300 (0:00:01.302)       0:01:51.159 ******* 
+
+TASK [kubernetes/preinstall : Stat sysctl file configuration] ******************
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:05 +0300 (0:00:00.697)       0:01:51.857 ******* 
+
+TASK [kubernetes/preinstall : Change sysctl file path to link source if linked] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:05 +0300 (0:00:00.138)       0:01:51.996 ******* 
+
+TASK [kubernetes/preinstall : Make sure sysctl file path folder exists] ********
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:06 +0300 (0:00:00.710)       0:01:52.706 ******* 
+
+TASK [kubernetes/preinstall : Enable ip forwarding] ****************************
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:07 +0300 (0:00:00.931)       0:01:53.638 ******* 
+Четверг 13 августа 2026  00:07:07 +0300 (0:00:00.109)       0:01:53.748 ******* 
+
+TASK [kubernetes/preinstall : Check if we need to set fs.may_detach_mounts] ****
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:07 +0300 (0:00:00.696)       0:01:54.444 ******* 
+Четверг 13 августа 2026  00:07:08 +0300 (0:00:00.119)       0:01:54.564 ******* 
+
+TASK [kubernetes/preinstall : Ensure kubelet expected parameters are set] ******
+changed: [k8s-master-ru-central1-e] => (item={'name': 'kernel.keys.root_maxbytes', 'value': 25000000})
+changed: [k8s-master-ru-central1-a] => (item={'name': 'kernel.keys.root_maxbytes', 'value': 25000000})
+changed: [k8s-master-ru-central1-d] => (item={'name': 'kernel.keys.root_maxbytes', 'value': 25000000})
+changed: [k8s-worker-ru-central1-a] => (item={'name': 'kernel.keys.root_maxbytes', 'value': 25000000})
+changed: [k8s-worker-ru-central1-d] => (item={'name': 'kernel.keys.root_maxbytes', 'value': 25000000})
+changed: [k8s-master-ru-central1-e] => (item={'name': 'kernel.keys.root_maxkeys', 'value': 1000000})
+changed: [k8s-master-ru-central1-a] => (item={'name': 'kernel.keys.root_maxkeys', 'value': 1000000})
+changed: [k8s-worker-ru-central1-a] => (item={'name': 'kernel.keys.root_maxkeys', 'value': 1000000})
+changed: [k8s-worker-ru-central1-d] => (item={'name': 'kernel.keys.root_maxkeys', 'value': 1000000})
+changed: [k8s-master-ru-central1-d] => (item={'name': 'kernel.keys.root_maxkeys', 'value': 1000000})
+changed: [k8s-master-ru-central1-e] => (item={'name': 'kernel.panic', 'value': 10})
+changed: [k8s-worker-ru-central1-a] => (item={'name': 'kernel.panic', 'value': 10})
+changed: [k8s-master-ru-central1-a] => (item={'name': 'kernel.panic', 'value': 10})
+changed: [k8s-master-ru-central1-d] => (item={'name': 'kernel.panic', 'value': 10})
+changed: [k8s-master-ru-central1-e] => (item={'name': 'kernel.panic_on_oops', 'value': 1})
+changed: [k8s-worker-ru-central1-a] => (item={'name': 'kernel.panic_on_oops', 'value': 1})
+changed: [k8s-master-ru-central1-a] => (item={'name': 'kernel.panic_on_oops', 'value': 1})
+changed: [k8s-master-ru-central1-d] => (item={'name': 'kernel.panic_on_oops', 'value': 1})
+changed: [k8s-master-ru-central1-e] => (item={'name': 'vm.overcommit_memory', 'value': 1})
+changed: [k8s-worker-ru-central1-a] => (item={'name': 'vm.overcommit_memory', 'value': 1})
+changed: [k8s-master-ru-central1-a] => (item={'name': 'vm.overcommit_memory', 'value': 1})
+changed: [k8s-master-ru-central1-d] => (item={'name': 'vm.overcommit_memory', 'value': 1})
+changed: [k8s-master-ru-central1-e] => (item={'name': 'vm.panic_on_oom', 'value': 0})
+changed: [k8s-worker-ru-central1-a] => (item={'name': 'vm.panic_on_oom', 'value': 0})
+changed: [k8s-master-ru-central1-a] => (item={'name': 'vm.panic_on_oom', 'value': 0})
+changed: [k8s-master-ru-central1-d] => (item={'name': 'vm.panic_on_oom', 'value': 0})
+changed: [k8s-worker-ru-central1-e] => (item={'name': 'kernel.keys.root_maxbytes', 'value': 25000000})
+changed: [k8s-worker-ru-central1-e] => (item={'name': 'kernel.keys.root_maxkeys', 'value': 1000000})
+changed: [k8s-worker-ru-central1-e] => (item={'name': 'kernel.panic', 'value': 10})
+changed: [k8s-worker-ru-central1-d] => (item={'name': 'kernel.panic', 'value': 10})
+changed: [k8s-worker-ru-central1-e] => (item={'name': 'kernel.panic_on_oops', 'value': 1})
+changed: [k8s-worker-ru-central1-d] => (item={'name': 'kernel.panic_on_oops', 'value': 1})
+changed: [k8s-worker-ru-central1-e] => (item={'name': 'vm.overcommit_memory', 'value': 1})
+changed: [k8s-worker-ru-central1-d] => (item={'name': 'vm.overcommit_memory', 'value': 1})
+changed: [k8s-worker-ru-central1-e] => (item={'name': 'vm.panic_on_oom', 'value': 0})
+changed: [k8s-worker-ru-central1-d] => (item={'name': 'vm.panic_on_oom', 'value': 0})
+Четверг 13 августа 2026  00:07:12 +0300 (0:00:03.933)       0:01:58.497 ******* 
+
+TASK [kubernetes/preinstall : Read current sysctl values] **********************
+ok: [k8s-worker-ru-central1-d] => (item={'key': 'fs.inotify.max_user_instances', 'value': 8192})
+ok: [k8s-master-ru-central1-e] => (item={'key': 'fs.inotify.max_user_instances', 'value': 8192})
+ok: [k8s-master-ru-central1-d] => (item={'key': 'fs.inotify.max_user_instances', 'value': 8192})
+ok: [k8s-worker-ru-central1-a] => (item={'key': 'fs.inotify.max_user_instances', 'value': 8192})
+ok: [k8s-worker-ru-central1-e] => (item={'key': 'fs.inotify.max_user_instances', 'value': 8192})
+ok: [k8s-master-ru-central1-a] => (item={'key': 'fs.inotify.max_user_instances', 'value': 8192})
+Четверг 13 августа 2026  00:07:13 +0300 (0:00:01.493)       0:01:59.990 ******* 
+
+TASK [kubernetes/preinstall : Increase sysctl value if lower than minimum] *****
+changed: [k8s-master-ru-central1-e] => (item={'changed': False, 'stdout': '128', 'stderr': '', 'rc': 0, 'cmd': ['sysctl', '-n', 'fs.inotify.max_user_instances'], 'start': '2026-08-12 21:07:12.385615', 'end': '2026-08-12 21:07:12.388177', 'delta': '0:00:00.002562', 'msg': '', 'invocation': {'module_args': {'_raw_params': 'sysctl -n fs.inotify.max_user_instances', '_uses_shell': False, 'expand_argument_vars': True, 'stdin_add_newline': True, 'strip_empty_ends': True, 'argv': None, 'chdir': None, 'executable': None, 'creates': None, 'removes': None, 'stdin': None}}, 'stdout_lines': ['128'], 'stderr_lines': [], 'failed': False, 'item': {'key': 'fs.inotify.max_user_instances', 'value': 8192}, 'ansible_loop_var': 'item'})
+changed: [k8s-master-ru-central1-a] => (item={'changed': False, 'stdout': '128', 'stderr': '', 'rc': 0, 'cmd': ['sysctl', '-n', 'fs.inotify.max_user_instances'], 'start': '2026-08-12 21:07:12.401528', 'end': '2026-08-12 21:07:13.405613', 'delta': '0:00:01.004085', 'msg': '', 'invocation': {'module_args': {'_raw_params': 'sysctl -n fs.inotify.max_user_instances', '_uses_shell': False, 'expand_argument_vars': True, 'stdin_add_newline': True, 'strip_empty_ends': True, 'argv': None, 'chdir': None, 'executable': None, 'creates': None, 'removes': None, 'stdin': None}}, 'stdout_lines': ['128'], 'stderr_lines': [], 'failed': False, 'item': {'key': 'fs.inotify.max_user_instances', 'value': 8192}, 'ansible_loop_var': 'item'})
+changed: [k8s-master-ru-central1-d] => (item={'changed': False, 'stdout': '128', 'stderr': '', 'rc': 0, 'cmd': ['sysctl', '-n', 'fs.inotify.max_user_instances'], 'start': '2026-08-12 21:07:12.381843', 'end': '2026-08-12 21:07:12.385288', 'delta': '0:00:00.003445', 'msg': '', 'invocation': {'module_args': {'_raw_params': 'sysctl -n fs.inotify.max_user_instances', '_uses_shell': False, 'expand_argument_vars': True, 'stdin_add_newline': True, 'strip_empty_ends': True, 'argv': None, 'chdir': None, 'executable': None, 'creates': None, 'removes': None, 'stdin': None}}, 'stdout_lines': ['128'], 'stderr_lines': [], 'failed': False, 'item': {'key': 'fs.inotify.max_user_instances', 'value': 8192}, 'ansible_loop_var': 'item'})
+changed: [k8s-worker-ru-central1-a] => (item={'changed': False, 'stdout': '128', 'stderr': '', 'rc': 0, 'cmd': ['sysctl', '-n', 'fs.inotify.max_user_instances'], 'start': '2026-08-12 21:07:12.399991', 'end': '2026-08-12 21:07:12.402911', 'delta': '0:00:00.002920', 'msg': '', 'invocation': {'module_args': {'_raw_params': 'sysctl -n fs.inotify.max_user_instances', '_uses_shell': False, 'expand_argument_vars': True, 'stdin_add_newline': True, 'strip_empty_ends': True, 'argv': None, 'chdir': None, 'executable': None, 'creates': None, 'removes': None, 'stdin': None}}, 'stdout_lines': ['128'], 'stderr_lines': [], 'failed': False, 'item': {'key': 'fs.inotify.max_user_instances', 'value': 8192}, 'ansible_loop_var': 'item'})
+changed: [k8s-worker-ru-central1-d] => (item={'changed': False, 'stdout': '128', 'stderr': '', 'rc': 0, 'cmd': ['sysctl', '-n', 'fs.inotify.max_user_instances'], 'start': '2026-08-12 21:07:12.408288', 'end': '2026-08-12 21:07:12.410861', 'delta': '0:00:00.002573', 'msg': '', 'invocation': {'module_args': {'_raw_params': 'sysctl -n fs.inotify.max_user_instances', '_uses_shell': False, 'expand_argument_vars': True, 'stdin_add_newline': True, 'strip_empty_ends': True, 'argv': None, 'chdir': None, 'executable': None, 'creates': None, 'removes': None, 'stdin': None}}, 'stdout_lines': ['128'], 'stderr_lines': [], 'failed': False, 'item': {'key': 'fs.inotify.max_user_instances', 'value': 8192}, 'ansible_loop_var': 'item'})
+changed: [k8s-worker-ru-central1-e] => (item={'changed': False, 'stdout': '128', 'stderr': '', 'rc': 0, 'cmd': ['sysctl', '-n', 'fs.inotify.max_user_instances'], 'start': '2026-08-12 21:07:12.735844', 'end': '2026-08-12 21:07:12.738951', 'delta': '0:00:00.003107', 'msg': '', 'invocation': {'module_args': {'_raw_params': 'sysctl -n fs.inotify.max_user_instances', '_uses_shell': False, 'expand_argument_vars': True, 'stdin_add_newline': True, 'strip_empty_ends': True, 'argv': None, 'chdir': None, 'executable': None, 'creates': None, 'removes': None, 'stdin': None}}, 'stdout_lines': ['128'], 'stderr_lines': [], 'failed': False, 'item': {'key': 'fs.inotify.max_user_instances', 'value': 8192}, 'ansible_loop_var': 'item'})
+Четверг 13 августа 2026  00:07:14 +0300 (0:00:00.770)       0:02:00.760 ******* 
+
+TASK [kubernetes/preinstall : Check dummy module] ******************************
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:15 +0300 (0:00:00.857)       0:02:01.618 ******* 
+Четверг 13 августа 2026  00:07:15 +0300 (0:00:00.093)       0:02:01.711 ******* 
+
+TASK [kubernetes/preinstall : Disable fapolicyd service] ***********************
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:16 +0300 (0:00:01.038)       0:02:02.750 ******* 
+Четверг 13 августа 2026  00:07:16 +0300 (0:00:00.097)       0:02:02.847 ******* 
+Четверг 13 августа 2026  00:07:16 +0300 (0:00:00.103)       0:02:02.950 ******* 
+Четверг 13 августа 2026  00:07:16 +0300 (0:00:00.102)       0:02:03.053 ******* 
+Четверг 13 августа 2026  00:07:16 +0300 (0:00:00.100)       0:02:03.154 ******* 
+Четверг 13 августа 2026  00:07:16 +0300 (0:00:00.100)       0:02:03.255 ******* 
+Четверг 13 августа 2026  00:07:16 +0300 (0:00:00.103)       0:02:03.358 ******* 
+Четверг 13 августа 2026  00:07:16 +0300 (0:00:00.098)       0:02:03.456 ******* 
+Четверг 13 августа 2026  00:07:17 +0300 (0:00:00.104)       0:02:03.561 ******* 
+Четверг 13 августа 2026  00:07:17 +0300 (0:00:00.099)       0:02:03.660 ******* 
+Четверг 13 августа 2026  00:07:17 +0300 (0:00:00.096)       0:02:03.756 ******* 
+Четверг 13 августа 2026  00:07:17 +0300 (0:00:00.101)       0:02:03.857 ******* 
+
+TASK [kubernetes/preinstall : Configure dhclient to supersede search/domain/nameservers] ***
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:18 +0300 (0:00:01.072)       0:02:04.930 ******* 
+
+TASK [kubernetes/preinstall : Configure dhclient hooks for resolv.conf (non-RH)] ***
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:20 +0300 (0:00:02.501)       0:02:07.431 ******* 
+Четверг 13 августа 2026  00:07:21 +0300 (0:00:00.126)       0:02:07.558 ******* 
+Четверг 13 августа 2026  00:07:21 +0300 (0:00:00.099)       0:02:07.657 ******* 
+Четверг 13 августа 2026  00:07:21 +0300 (0:00:00.096)       0:02:07.753 ******* 
+Четверг 13 августа 2026  00:07:21 +0300 (0:00:00.003)       0:02:07.756 ******* 
+Четверг 13 августа 2026  00:07:21 +0300 (0:00:00.002)       0:02:07.759 ******* 
+Четверг 13 августа 2026  00:07:21 +0300 (0:00:00.003)       0:02:07.762 ******* 
+Четверг 13 августа 2026  00:07:21 +0300 (0:00:00.002)       0:02:07.765 ******* 
+Четверг 13 августа 2026  00:07:21 +0300 (0:00:00.002)       0:02:07.768 ******* 
+Четверг 13 августа 2026  00:07:21 +0300 (0:00:00.003)       0:02:07.771 ******* 
+Четверг 13 августа 2026  00:07:21 +0300 (0:00:00.097)       0:02:07.869 ******* 
+Четверг 13 августа 2026  00:07:21 +0300 (0:00:00.106)       0:02:07.975 ******* 
+
+RUNNING HANDLER [kubernetes/preinstall : Preinstall | kube-apiserver configured] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+Четверг 13 августа 2026  00:07:21 +0300 (0:00:00.399)       0:02:08.375 ******* 
+
+RUNNING HANDLER [kubernetes/preinstall : Preinstall | kube-controller configured] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+Четверг 13 августа 2026  00:07:22 +0300 (0:00:00.381)       0:02:08.756 ******* 
+Четверг 13 августа 2026  00:07:22 +0300 (0:00:00.113)       0:02:08.870 ******* 
+Четверг 13 августа 2026  00:07:22 +0300 (0:00:00.100)       0:02:08.971 ******* 
+Четверг 13 августа 2026  00:07:22 +0300 (0:00:00.098)       0:02:09.069 ******* 
+Четверг 13 августа 2026  00:07:22 +0300 (0:00:00.110)       0:02:09.179 ******* 
+Четверг 13 августа 2026  00:07:22 +0300 (0:00:00.097)       0:02:09.276 ******* 
+
+RUNNING HANDLER [kubernetes/preinstall : Preinstall | Restart systemd-resolved] ***
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:24 +0300 (0:00:01.465)       0:02:10.742 ******* 
+
+TASK [kubernetes/preinstall : Check if we are running inside a Azure VM] *******
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:24 +0300 (0:00:00.707)       0:02:11.449 ******* 
+
+TASK [Run calico checks] *******************************************************
+included: network_plugin/calico for k8s-master-ru-central1-a, k8s-master-ru-central1-d, k8s-master-ru-central1-e, k8s-worker-ru-central1-a, k8s-worker-ru-central1-d, k8s-worker-ru-central1-e
+Четверг 13 августа 2026  00:07:25 +0300 (0:00:00.448)       0:02:11.898 ******* 
+
+TASK [network_plugin/calico : Stop if legacy encapsulation variables are detected (ipip)] ***
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:07:25 +0300 (0:00:00.047)       0:02:11.945 ******* 
+
+TASK [network_plugin/calico : Stop if legacy encapsulation variables are detected (ipip_mode)] ***
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:07:25 +0300 (0:00:00.046)       0:02:11.992 ******* 
+
+TASK [network_plugin/calico : Stop if legacy encapsulation variables are detected (calcio_ipam_autoallocateblocks)] ***
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:07:25 +0300 (0:00:00.048)       0:02:12.040 ******* 
+
+TASK [network_plugin/calico : Stop if supported Calico versions] ***************
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:07:25 +0300 (0:00:00.050)       0:02:12.090 ******* 
+
+TASK [network_plugin/calico : Check if calicoctl.sh exists] ********************
+ok: [k8s-master-ru-central1-a]
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.496)       0:02:12.587 ******* 
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.031)       0:02:12.618 ******* 
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.028)       0:02:12.646 ******* 
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.034)       0:02:12.681 ******* 
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.038)       0:02:12.720 ******* 
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.029)       0:02:12.750 ******* 
+
+TASK [network_plugin/calico : Check vars defined correctly] ********************
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.047)       0:02:12.797 ******* 
+
+TASK [network_plugin/calico : Check calico network backend defined correctly] ***
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.042)       0:02:12.839 ******* 
+
+TASK [network_plugin/calico : Check ipip and vxlan mode defined correctly] *****
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.047)       0:02:12.887 ******* 
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.031)       0:02:12.919 ******* 
+
+TASK [network_plugin/calico : Check ipip and vxlan mode if simultaneously enabled] ***
+ok: [k8s-master-ru-central1-a] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.045)       0:02:12.964 ******* 
+
+TASK [network_plugin/calico : Get Calico default-pool configuration] ***********
+ok: [k8s-master-ru-central1-a]
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.348)       0:02:13.312 ******* 
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.045)       0:02:13.358 ******* 
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.047)       0:02:13.406 ******* 
+Четверг 13 августа 2026  00:07:26 +0300 (0:00:00.047)       0:02:13.453 ******* 
+Четверг 13 августа 2026  00:07:27 +0300 (0:00:00.043)       0:02:13.497 ******* 
+Четверг 13 августа 2026  00:07:27 +0300 (0:00:00.042)       0:02:13.539 ******* 
+Четверг 13 августа 2026  00:07:27 +0300 (0:00:00.035)       0:02:13.575 ******* 
+Четверг 13 августа 2026  00:07:27 +0300 (0:00:00.038)       0:02:13.613 ******* 
+Четверг 13 августа 2026  00:07:27 +0300 (0:00:00.080)       0:02:13.694 ******* 
+
+TASK [container-engine/validate-container-engine : Validate-container-engine | check if fedora coreos] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:27 +0300 (0:00:00.662)       0:02:14.357 ******* 
+
+TASK [container-engine/validate-container-engine : Validate-container-engine | set is_ostree] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:28 +0300 (0:00:00.135)       0:02:14.493 ******* 
+
+TASK [container-engine/validate-container-engine : Ensure kubelet systemd unit exists] ***
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:28 +0300 (0:00:00.747)       0:02:15.240 ******* 
+
+TASK [container-engine/validate-container-engine : Populate service facts] *****
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:33 +0300 (0:00:04.958)       0:02:20.199 ******* 
+
+TASK [container-engine/validate-container-engine : Check if containerd is installed] ***
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:34 +0300 (0:00:00.990)       0:02:21.190 ******* 
+
+TASK [container-engine/validate-container-engine : Check if docker is installed] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:35 +0300 (0:00:00.672)       0:02:21.862 ******* 
+
+TASK [container-engine/validate-container-engine : Check if crio is installed] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:36 +0300 (0:00:00.676)       0:02:22.538 ******* 
+Четверг 13 августа 2026  00:07:36 +0300 (0:00:00.120)       0:02:22.659 ******* 
+Четверг 13 августа 2026  00:07:36 +0300 (0:00:00.147)       0:02:22.807 ******* 
+Четверг 13 августа 2026  00:07:36 +0300 (0:00:00.132)       0:02:22.939 ******* 
+Четверг 13 августа 2026  00:07:36 +0300 (0:00:00.146)       0:02:23.086 ******* 
+Четверг 13 августа 2026  00:07:36 +0300 (0:00:00.216)       0:02:23.302 ******* 
+Четверг 13 августа 2026  00:07:36 +0300 (0:00:00.126)       0:02:23.429 ******* 
+Четверг 13 августа 2026  00:07:37 +0300 (0:00:00.158)       0:02:23.587 ******* 
+Четверг 13 августа 2026  00:07:37 +0300 (0:00:00.139)       0:02:23.726 ******* 
+Четверг 13 августа 2026  00:07:37 +0300 (0:00:00.147)       0:02:23.874 ******* 
+Четверг 13 августа 2026  00:07:37 +0300 (0:00:00.138)       0:02:24.013 ******* 
+Четверг 13 августа 2026  00:07:37 +0300 (0:00:00.167)       0:02:24.181 ******* 
+Четверг 13 августа 2026  00:07:37 +0300 (0:00:00.150)       0:02:24.331 ******* 
+Четверг 13 августа 2026  00:07:37 +0300 (0:00:00.139)       0:02:24.470 ******* 
+Четверг 13 августа 2026  00:07:38 +0300 (0:00:00.184)       0:02:24.655 ******* 
+Четверг 13 августа 2026  00:07:38 +0300 (0:00:00.214)       0:02:24.870 ******* 
+Четверг 13 августа 2026  00:07:38 +0300 (0:00:00.134)       0:02:25.004 ******* 
+Четверг 13 августа 2026  00:07:38 +0300 (0:00:00.143)       0:02:25.148 ******* 
+Четверг 13 августа 2026  00:07:38 +0300 (0:00:00.174)       0:02:25.322 ******* 
+Четверг 13 августа 2026  00:07:38 +0300 (0:00:00.126)       0:02:25.449 ******* 
+Четверг 13 августа 2026  00:07:39 +0300 (0:00:00.271)       0:02:25.721 ******* 
+Четверг 13 августа 2026  00:07:39 +0300 (0:00:00.149)       0:02:25.871 ******* 
+Четверг 13 августа 2026  00:07:39 +0300 (0:00:00.133)       0:02:26.005 ******* 
+Четверг 13 августа 2026  00:07:39 +0300 (0:00:00.153)       0:02:26.158 ******* 
+Четверг 13 августа 2026  00:07:39 +0300 (0:00:00.147)       0:02:26.306 ******* 
+Четверг 13 августа 2026  00:07:40 +0300 (0:00:00.240)       0:02:26.546 ******* 
+Четверг 13 августа 2026  00:07:40 +0300 (0:00:00.155)       0:02:26.702 ******* 
+Четверг 13 августа 2026  00:07:40 +0300 (0:00:00.149)       0:02:26.851 ******* 
+Четверг 13 августа 2026  00:07:40 +0300 (0:00:00.158)       0:02:27.010 ******* 
+Четверг 13 августа 2026  00:07:40 +0300 (0:00:00.148)       0:02:27.158 ******* 
+Четверг 13 августа 2026  00:07:40 +0300 (0:00:00.220)       0:02:27.378 ******* 
+Четверг 13 августа 2026  00:07:41 +0300 (0:00:00.162)       0:02:27.541 ******* 
+Четверг 13 августа 2026  00:07:41 +0300 (0:00:00.181)       0:02:27.722 ******* 
+Четверг 13 августа 2026  00:07:41 +0300 (0:00:00.169)       0:02:27.892 ******* 
+Четверг 13 августа 2026  00:07:41 +0300 (0:00:00.155)       0:02:28.047 ******* 
+Четверг 13 августа 2026  00:07:41 +0300 (0:00:00.136)       0:02:28.183 ******* 
+Четверг 13 августа 2026  00:07:42 +0300 (0:00:00.388)       0:02:28.572 ******* 
+Четверг 13 августа 2026  00:07:42 +0300 (0:00:00.172)       0:02:28.745 ******* 
+Четверг 13 августа 2026  00:07:42 +0300 (0:00:00.147)       0:02:28.893 ******* 
+Четверг 13 августа 2026  00:07:42 +0300 (0:00:00.143)       0:02:29.036 ******* 
+Четверг 13 августа 2026  00:07:42 +0300 (0:00:00.142)       0:02:29.179 ******* 
+Четверг 13 августа 2026  00:07:42 +0300 (0:00:00.147)       0:02:29.327 ******* 
+Четверг 13 августа 2026  00:07:43 +0300 (0:00:00.187)       0:02:29.515 ******* 
+Четверг 13 августа 2026  00:07:43 +0300 (0:00:00.146)       0:02:29.661 ******* 
+Четверг 13 августа 2026  00:07:43 +0300 (0:00:00.147)       0:02:29.809 ******* 
+Четверг 13 августа 2026  00:07:43 +0300 (0:00:00.137)       0:02:29.946 ******* 
+Четверг 13 августа 2026  00:07:43 +0300 (0:00:00.151)       0:02:30.098 ******* 
+Четверг 13 августа 2026  00:07:43 +0300 (0:00:00.175)       0:02:30.273 ******* 
+Четверг 13 августа 2026  00:07:43 +0300 (0:00:00.146)       0:02:30.420 ******* 
+Четверг 13 августа 2026  00:07:44 +0300 (0:00:00.160)       0:02:30.580 ******* 
+Четверг 13 августа 2026  00:07:44 +0300 (0:00:00.146)       0:02:30.726 ******* 
+Четверг 13 августа 2026  00:07:44 +0300 (0:00:00.155)       0:02:30.882 ******* 
+Четверг 13 августа 2026  00:07:44 +0300 (0:00:00.146)       0:02:31.028 ******* 
+Четверг 13 августа 2026  00:07:44 +0300 (0:00:00.154)       0:02:31.183 ******* 
+Четверг 13 августа 2026  00:07:44 +0300 (0:00:00.137)       0:02:31.321 ******* 
+Четверг 13 августа 2026  00:07:44 +0300 (0:00:00.149)       0:02:31.471 ******* 
+Четверг 13 августа 2026  00:07:45 +0300 (0:00:00.179)       0:02:31.650 ******* 
+Четверг 13 августа 2026  00:07:45 +0300 (0:00:00.213)       0:02:31.864 ******* 
+Четверг 13 августа 2026  00:07:45 +0300 (0:00:00.186)       0:02:32.050 ******* 
+Четверг 13 августа 2026  00:07:45 +0300 (0:00:00.147)       0:02:32.198 ******* 
+Четверг 13 августа 2026  00:07:45 +0300 (0:00:00.221)       0:02:32.419 ******* 
+Четверг 13 августа 2026  00:07:46 +0300 (0:00:00.194)       0:02:32.613 ******* 
+
+TASK [Container Manager] *******************************************************
+included: container-engine/containerd for k8s-master-ru-central1-a, k8s-master-ru-central1-d, k8s-master-ru-central1-e, k8s-worker-ru-central1-a, k8s-worker-ru-central1-d, k8s-worker-ru-central1-e
+Четверг 13 августа 2026  00:07:46 +0300 (0:00:00.660)       0:02:33.273 ******* 
+
+TASK [container-engine/containerd-common : Containerd-common | check if fedora coreos] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:47 +0300 (0:00:00.698)       0:02:33.972 ******* 
+
+TASK [container-engine/containerd-common : Containerd-common | set is_ostree] ***
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:47 +0300 (0:00:00.179)       0:02:34.151 ******* 
+Четверг 13 августа 2026  00:07:47 +0300 (0:00:00.219)       0:02:34.370 ******* 
+
+TASK [container-engine/runc : Runc | check if fedora coreos] *******************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:48 +0300 (0:00:00.721)       0:02:35.092 ******* 
+
+TASK [container-engine/runc : Runc | set is_ostree] ****************************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:48 +0300 (0:00:00.190)       0:02:35.283 ******* 
+
+TASK [container-engine/runc : Runc | Remove package] ***************************
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:50 +0300 (0:00:01.783)       0:02:37.066 ******* 
+
+TASK [container-engine/runc : Runc | Remove orphaned binary] *******************
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:51 +0300 (0:00:00.738)       0:02:37.805 ******* 
+
+TASK [container-engine/runc : Runc | Download runc binary] *********************
+included: /home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/kubespray/roles/container-engine/runc/tasks/../../../download/tasks/download_file.yml for k8s-master-ru-central1-a, k8s-master-ru-central1-d, k8s-master-ru-central1-e, k8s-worker-ru-central1-a, k8s-worker-ru-central1-d, k8s-worker-ru-central1-e
+Четверг 13 августа 2026  00:07:51 +0300 (0:00:00.252)       0:02:38.058 ******* 
+
+TASK [container-engine/runc : Prep_download | Set a few facts] *****************
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:53 +0300 (0:00:01.639)       0:02:39.698 ******* 
+Четверг 13 августа 2026  00:07:53 +0300 (0:00:00.157)       0:02:39.856 ******* 
+
+TASK [container-engine/runc : Download_file | Set pathname of cached file] *****
+ok: [k8s-master-ru-central1-d]
+ok: [k8s-worker-ru-central1-d]
+ok: [k8s-master-ru-central1-a]
+ok: [k8s-master-ru-central1-e]
+ok: [k8s-worker-ru-central1-a]
+ok: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:07:56 +0300 (0:00:03.299)       0:02:43.155 ******* 
+
+TASK [container-engine/runc : Download_file | Create dest directory on node] ***
+changed: [k8s-worker-ru-central1-a]
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-d]
+changed: [k8s-master-ru-central1-e]
+changed: [k8s-master-ru-central1-a]
+changed: [k8s-worker-ru-central1-e]
+Четверг 13 августа 2026  00:08:01 +0300 (0:00:05.218)       0:02:48.373 ******* 
+Четверг 13 августа 2026  00:08:01 +0300 (0:00:00.048)       0:02:48.422 ******* 
+Четверг 13 августа 2026  00:08:01 +0300 (0:00:00.050)       0:02:48.472 ******* 
+FAILED - RETRYING: [k8s-master-ru-central1-a]: Download_file | Download item (4 retries left).
+FAILED - RETRYING: [k8s-master-ru-central1-e]: Download_file | Download item (4 retries left).
+FAILED - RETRYING: [k8s-master-ru-central1-d]: Download_file | Download item (4 retries left).
+FAILED - RETRYING: [k8s-worker-ru-central1-d]: Download_file | Download item (4 retries left).
+
+TASK [container-engine/runc : Download_file | Download item] *******************
+changed: [k8s-worker-ru-central1-a]
+FAILED - RETRYING: [k8s-master-ru-central1-a]: Download_file | Download item (3 retries left).
+FAILED - RETRYING: [k8s-master-ru-central1-e]: Download_file | Download item (3 retries left).
+FAILED - RETRYING: [k8s-worker-ru-central1-d]: Download_file | Download item (3 retries left).
+FAILED - RETRYING: [k8s-master-ru-central1-d]: Download_file | Download item (3 retries left).
+FAILED - RETRYING: [k8s-worker-ru-central1-e]: Download_file | Download item (4 retries left).
+FAILED - RETRYING: [k8s-master-ru-central1-a]: Download_file | Download item (2 retries left).
+FAILED - RETRYING: [k8s-master-ru-central1-e]: Download_file | Download item (2 retries left).
+FAILED - RETRYING: [k8s-worker-ru-central1-d]: Download_file | Download item (2 retries left).
+FAILED - RETRYING: [k8s-master-ru-central1-d]: Download_file | Download item (2 retries left).
+FAILED - RETRYING: [k8s-worker-ru-central1-e]: Download_file | Download item (3 retries left).
+FAILED - RETRYING: [k8s-master-ru-central1-e]: Download_file | Download item (1 retries left).
+FAILED - RETRYING: [k8s-master-ru-central1-a]: Download_file | Download item (1 retries left).
+FAILED - RETRYING: [k8s-worker-ru-central1-d]: Download_file | Download item (1 retries left).
+changed: [k8s-master-ru-central1-d]
+changed: [k8s-worker-ru-central1-e]
+fatal: [k8s-master-ru-central1-e]: FAILED! => {"attempts": 4, "censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result", "changed": false}
+fatal: [k8s-master-ru-central1-a]: FAILED! => {"attempts": 4, "censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result", "changed": false}
+fatal: [k8s-worker-ru-central1-d]: FAILED! => {"attempts": 4, "censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result", "changed": false}
+
+PLAY RECAP *********************************************************************
+k8s-master-ru-central1-a   : ok=116  changed=21   unreachable=0    failed=1    skipped=157  rescued=0    ignored=0   
+k8s-master-ru-central1-b   : ok=2    changed=0    unreachable=0    failed=0    skipped=10   rescued=0    ignored=0   
+k8s-master-ru-central1-d   : ok=94   changed=22   unreachable=0    failed=0    skipped=134  rescued=0    ignored=0   
+k8s-master-ru-central1-e   : ok=93   changed=21   unreachable=0    failed=1    skipped=134  rescued=0    ignored=0   
+k8s-worker-ru-central1-a   : ok=92   changed=22   unreachable=0    failed=0    skipped=136  rescued=0    ignored=0   
+k8s-worker-ru-central1-d   : ok=91   changed=21   unreachable=0    failed=1    skipped=136  rescued=0    ignored=0   
+k8s-worker-ru-central1-e   : ok=92   changed=22   unreachable=0    failed=0    skipped=136  rescued=0    ignored=0   
+
+
+TASKS RECAP ********************************************************************
+Четверг 13 августа 2026  00:08:36 +0300 (0:00:34.777)       0:03:23.250 ******* 
+=============================================================================== 
+system_packages : Manage packages -------------------------------------- 50.88s
+container-engine/runc : Download_file | Download item ------------------ 34.78s
+container-engine/runc : Download_file | Create dest directory on node --- 5.22s
+container-engine/validate-container-engine : Populate service facts ----- 4.96s
+kubernetes/preinstall : Mask swap.target (persist swapoff) -------------- 4.03s
+kubernetes/preinstall : Ensure kubelet expected parameters are set ------ 3.93s
+container-engine/runc : Download_file | Set pathname of cached file ----- 3.30s
+adduser : User | Create User -------------------------------------------- 3.09s
+kubernetes/preinstall : Check if /etc/dhcp/dhclient.conf exists --------- 3.08s
+bootstrap_os : Fetch /etc/os-release ------------------------------------ 2.98s
+kubernetes/preinstall : Write Kubespray DNS settings to systemd-resolved --- 2.81s
+kubernetes/preinstall : Create kubernetes directories ------------------- 2.51s
+kubernetes/preinstall : Configure dhclient hooks for resolv.conf (non-RH) --- 2.50s
+system_packages : Gather OS information --------------------------------- 2.24s
+Gather necessary facts (hardware) --------------------------------------- 2.05s
+container-engine/runc : Runc | Remove package --------------------------- 1.78s
+container-engine/runc : Prep_download | Set a few facts ----------------- 1.64s
+bootstrap_os : Assign inventory name to unconfigured hostnames (non-CoreOS, non-Flatcar, Suse and ClearLinux, non-Fedora) --- 1.63s
+kubernetes/preinstall : Remove swapfile from /etc/fstab ----------------- 1.61s
+kubernetes/preinstall : Read current sysctl values ---------------------- 1.49s
