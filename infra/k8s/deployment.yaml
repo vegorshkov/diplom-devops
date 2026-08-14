@@ -3,10 +3,13 @@ kind: Deployment
 metadata:
   name: infra
   namespace: default
-  labels:
-    app: infra
 spec:
-  replicas: 1
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: infra
@@ -16,6 +19,13 @@ spec:
         app: infra
     spec:
       serviceAccountName: infra-viewer
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: infra
       containers:
       - name: infra
         image: docker.io/library/infra:latest
@@ -26,6 +36,10 @@ spec:
         env:
         - name: PORT
           value: "8080"
+        - name: K8S_NAMESPACE
+          value: "default"
+        - name: METRICS_INTERVAL
+          value: "10"
         livenessProbe:
           httpGet:
             path: /api/health
