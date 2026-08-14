@@ -528,7 +528,58 @@ Ansible идемпотентен - это свойство Ansible и его м�
 
 Далее, перейдем к деплою приложения котрое должно в графике мониторить состояние кластера и себя так же.
 
+Деплоим приложение Infra:
+Обновим приложение, для того, чтобы оно работало реальными данными из Kubernetes API. 
+Создаём RBAC и деплой:
+![alt text](image-76.png)
 
+Обновление Deployment:
+![alt text](image-77.png)
 
+Собираем образ приложения изагружаем в Conteinerd
+
+![alt text](image-78.png)
+
+Загружаю приложение на мастер:
+![alt text](image-79.png)
+
+Загружаю с мастера на все ноды:
+```
+for host in k8s-master-ru-central1-d k8s-master-ru-central1-e \
+            k8s-worker-ru-central1-a k8s-worker-ru-central1-d k8s-worker-ru-central1-e; do
+  echo "=== $host ==="
+  docker save infra:latest | ssh $host "sudo ctr -n k8s.io images import -" &
+done
+wait
+```
+![alt text](image-80.png)
+
+Применяем RBAC:
+![alt text](image-81.png)
+
+RBAC применён успешно:
+
+ServiceAccount infra-viewer создан;
+ClusterRole infra-viewer создан;
+ClusterRoleBinding infra-viewer создан.
+
+Ошибок нет. Повторное применение этих объектов будет идемпотентным.
+
+Применяю Deployment
+![alt text](image-82.png)
+
+Приложение развернуто:
+```
+NAME                     READY   STATUS    NODE
+infra-6df498986f-dvqxg   1/1     Running   k8s-worker-ru-central1-d
+
+Лог: Infra server starting on :8080
+
+```
+
+![alt text](image-83.png)
+
+POD_NAME=infra-6df498986f-dvqxg
+{"status":"ok"}  -  приложение работает.
 
 

@@ -18,7 +18,8 @@ spec:
       serviceAccountName: infra-viewer
       containers:
       - name: infra
-        image: registry.example.com/infra:latest
+        image: docker.io/library/infra:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080
           name: http
