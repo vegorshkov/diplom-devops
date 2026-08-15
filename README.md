@@ -644,3 +644,86 @@ Service	ClusterIP        10.233.22.136:8080
 Endpoints	             3 пода доступны
 Health	                 curl http://infra:8080/api/health работает
 
+
+### Настройка Мониторинга:
+
+## Подготовка Kubernetes к установке системы мониторинга
+
+Система мониторинга разворачивается непосредственно внутри Kubernetes-кластера. Для последующей установки компонентов мониторинга необходимо включить Helm и Metrics Server.
+
+Helm используется для управления Kubernetes-пакетами. 
+Metrics Server предоставляет API `metrics.k8s.io`, необходимый для получения текущих показателей использования CPU и памяти командами `kubectl top`, а также для работы механизмов автоматического масштабирования.
+
+
+В файле `ansible_kubespray/inventory/group_vars/k8s_cluster/addons.yml` устанавливаются следующие параметры:
+
+```yaml
+helm_enabled: true
+metrics_server_enabled: true
+```
+
+Обновлённая конфигурация применяется к существующему кластеру с помощью Kubespray:
+
+```bash
+cd /home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/kubespray
+source /home/vgorshkov/venv-kubespray-2.31.0/bin/activate
+
+ansible-playbook \
+  -i ../inventory/hosts.yaml \
+  --become \
+  --become-user=root \
+  cluster.yml
+```
+
+Повторный запуск `cluster.yml` не создаёт новый кластер, а приводит его компоненты к состоянию, определённому в inventory Kubespray.
+
+После завершения необходимо проверить доступность Helm и Metrics API:
+
+```bash
+ssh k8s-master-ru-central1-a "helm version --short"
+
+ssh k8s-master-ru-central1-a \
+  "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf get apiservice v1beta1.metrics.k8s.io"
+
+ssh k8s-master-ru-central1-a \
+  "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf top nodes"
+
+ssh k8s-master-ru-central1-a \
+  "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf top pods --all-namespaces"
+```
+
+Вывод Playbook:
+![alt text](image-87.png)
+![alt text](image-88.png)
+![alt text](image-89.png)
+![alt text](image-90.png)
+![alt text](image-91.png)
+![alt text](image-92.png)
+![alt text](image-93.png)
+![alt text](image-94.png)
+![alt text](image-95.png)
+![alt text](image-96.png)
+
+
+
+Успешное выполнение подтверждает готовность Kubernetes-кластера к развёртыванию Prometheus, Grafana, Alertmanager, Node Exporter и kube-state-metrics.
+
+Kubespray завершился успешно:
+
+![alt text](image-97.png)
+![alt text](image-98.png)
+
+все 6 узлов: failed=0, unreachable=0;
+продолжительность — около 14 минут 47 секунд;
+Helm v3.18.4 установлен на трёх управляющих узлах;
+образ Metrics Server v0.8.1 загружен;
+манифесты Metrics Server сформированы и применены;
+ошибок конфигурации Calico не обнаружено.
+
+Количество changed ожидаемо: был выполнен полный cluster.yml, который повторно синхронизировал конфигурацию кластера и установил новые компоненты.
+
+![alt text](image-99.png)
+![alt text](image-100.png)
+![alt text](image-101.png)
+
+
