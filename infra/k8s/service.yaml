@@ -7,10 +7,10 @@ metadata:
     app: infra
 spec:
   type: ClusterIP
-  ports:
-  - port: 8080
-    targetPort: 8080
-    protocol: TCP
-    name: http
   selector:
     app: infra
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP

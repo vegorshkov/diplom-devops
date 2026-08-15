@@ -602,5 +602,45 @@ POD_NAME=infra-6df498986f-dvqxg
 
 Приложение развёрнуто в трёх репликах, распределённых по worker-узлам в зонах `ru-central1-a`, `ru-central1-d` и `ru-central1-e`. При ручном удалении pod на узле `k8s-worker-ru-central1-d` контроллер Deployment автоматически создал новую реплику. Новый pod был запущен на освободившемся узле и перешёл в состояние `Ready` примерно за 10 секунд. Во время восстановления две остальные реплики продолжали работать. Проверка подтвердила самовосстановление приложения, сохранение заданного количества реплик и межзональное распределение.
 
+Перейдем к настройке конфигурации Мониторинга:
 
+1. Service — опубликовать приложение внутри кластера
+
+2. Проверить доступность — через ClusterIP/NodePort
+
+3. Запустить Мониторинг — kube-prometheus + Grafana
+
+4. далее настройка CI/CD
+
+Создаём Service: [text](infra/k8s/service.yaml)
+
+Применяем
+ssh k8s-master-ru-central1-a "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf apply -f -" < k8s/service.yaml
+
+Проверяем
+ssh k8s-master-ru-central1-a "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf get svc infra -o wide"
+
+Проверяем эндпоинты
+ssh k8s-master-ru-central1-a "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf get endpoints infra"
+
+Проверяем доступность через Service
+ssh k8s-master-ru-central1-a "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf run test-curl --rm -i --restart=Never --image=curlimages/curl -- curl -s http://infra:8080/api/health"
+service/infra created
+NAME    TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE   SELECTOR
+infra   ClusterIP   10.233.22.136   <none>        8080/TCP   1s    app=infra
+Warning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+NAME    ENDPOINTS                                                  AGE
+infra   10.233.108.68:8080,10.233.110.133:8080,10.233.88.70:8080   2s
+All commands and output from this session will be recorded in container logs, including credentials and sensitive information passed through the command prompt.
+If you don't see a command prompt, try pressing enter.
+pod "test-curl" deleted from default namespace
+
+Тест-под выполнил curl —  доступ через Service работает (вывод pod "test-curl" deleted —  тест завершился).
+
+Выводы:
+Компонент	             Статус
+Deployment	             3 реплики по зонам
+Service	ClusterIP        10.233.22.136:8080
+Endpoints	             3 пода доступны
+Health	                 curl http://infra:8080/api/health работает
 
