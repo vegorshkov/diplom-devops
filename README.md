@@ -726,4 +726,322 @@ Helm v3.18.4 установлен на трёх управляющих узла�
 ![alt text](image-100.png)
 ![alt text](image-101.png)
 
+Добавим ресурсов для развертывания:
+![alt text](image-102.png)
+
+Установим kube-prometheus-stack для мониторинга [playbook](ansible_kubespray/playbooks/install-monitoring.yml)
+
+![alt text](image-104.png)
+![alt text](image-105.png)
+![alt text](image-106.png)
+![alt text](image-107.png)
+![alt text](image-108.png)
+
+При установке возникли технические тонкости, по результатам составлен PostMorten.
+
+```
+## Постмортем установки kube-prometheus-stack
+
+Дата инцидента: 15.08.2026
+
+Статус: устранён
+
+### 1. Краткое описание
+
+При первоначальной установке kube-prometheus-stack Helm одновременно запускался на трёх control-plane узлах. Один узел успешно создал release, два других завершились с ошибкой `release: already exists`.
+
+После установки Grafana перешла в состояние `CrashLoopBackOff`. Prometheus и Alertmanager продолжали работать, однако заданные для них ограничения ресурсов и параметры хранения метрик не применились.
+
+Первая попытка исправления не изменила release, поскольку в playbook была указана отсутствующая в Helm-репозитории версия chart `91.4.0`.
+
+### 2. Воздействие
+
+В период инцидента:
+
+- Grafana была недоступна;
+- контейнер Grafana регулярно завершался с кодом 137;
+- Prometheus работал без заданных requests и limits;
+- срок хранения метрик Prometheus составлял стандартные 10 суток вместо 24 часов;
+- ограничение размера хранилища метрик не применилось;
+- Alertmanager использовал стандартный request памяти 200 MiБ;
+- Kubernetes и прикладные компоненты кластера не пострадали;
+- Prometheus, Alertmanager, Node Exporter и kube-state-metrics продолжали работать.
+
+### 3. Основные причины
+
+1. Helm install выполнялся одновременно на всех control-plane узлах.
+
+2. Использовалась операция `helm install`, не обеспечивающая безопасный повторный запуск при существующем release.
+
+3. Часть Helm values была указана по неправильным путям:
+
+   - `prometheus.resources`;
+   - `prometheus.retention`;
+   - `prometheus.retentionSize`;
+   - `alertmanager.resources`.
+
+4. Для Grafana был установлен недостаточный лимит памяти 128 MiБ.
+
+5. Версия Helm chart первоначально не была зафиксирована.
+
+6. При первой попытке исправления была указана несуществующая версия chart `91.4.0`.
+
+7. Перед применением отсутствовала автоматическая проверка доступности указанной версии chart.
+
+### 4. Подтверждение причины отказа Grafana
+
+Контейнер Grafana завершался со следующими параметрами:
+
+- состояние: `OOMKilled`;
+- код завершения: 137;
+- request памяти: 64 MiБ;
+- limit памяти: 128 MiБ;
+- количество перезапусков: 7.
+
+Фактическое потребление памяти исправленной Grafana составляет 319 MiБ. Следовательно, лимит 128 MiБ объективно не соответствовал используемой версии Grafana 13.1.3.
+
+### 5. Выполненные корректирующие действия
+
+1. Версия kube-prometheus-stack зафиксирована на `88.3.0`.
+
+2. Helm values вынесены в отдельный файл.
+
+3. Исправлены пути параметров Prometheus и Alertmanager.
+
+4. Операция установки заменена на `helm upgrade --install`.
+
+5. Выполнение Helm ограничено первым control-plane узлом.
+
+6. Добавлены параметры:
+
+   - `--reset-values`;
+   - `--atomic`;
+   - `--wait`;
+   - `--timeout 10m`;
+   - `--history-max 5`.
+
+7. Добавлены предварительные проверки:
+
+   - наличия kubeconfig;
+   - наличия Helm;
+   - готовности Kubernetes API;
+   - доступности зафиксированной версии chart;
+   - наличия namespace.
+
+8. Добавлено ожидание готовности Prometheus, Alertmanager и Grafana.
+
+9. Добавлена итоговая проверка фактически применённых значений.
+
+### 6. Применённые ограничения ресурсов
+
+| Компонент | Request CPU | Limit CPU | Request memory | Limit memory |
+|---|---:|---:|---:|---:|
+| Prometheus | 100m | 500m | 256 MiБ | 768 MiБ |
+| Grafana | 50m | 200m | 256 MiБ | 512 MiБ |
+| Grafana sidecar | 10m | 100m | 64 MiБ | 128 MiБ |
+| Alertmanager | 10m | 100m | 32 MiБ | 128 MiБ |
+
+### 7. Результат восстановления
+
+Helm release:
+
+- namespace: `monitoring`;
+- status: `deployed`;
+- revision: 3;
+- chart: `kube-prometheus-stack-88.3.0`;
+- Prometheus Operator: `v0.93.0`.
+
+Состояние компонентов:
+
+- Grafana: 3/3 Running, 0 перезапусков;
+- Prometheus: 2/2 Running, 0 перезапусков;
+- Alertmanager: 2/2 Running, 0 перезапусков;
+- Prometheus Operator: Running;
+- kube-state-metrics: Running;
+- Node Exporter: Running на всех шести узлах.
+
+Фактическое потребление памяти:
+
+- Grafana: 319 MiБ;
+- Grafana dashboard sidecar: 78 MiБ;
+- Grafana datasource sidecar: 76 MiБ;
+- Prometheus: 316 MiБ;
+- Alertmanager: 13 MiБ.
+
+Параметры хранения Prometheus:
+
+- retention: 24 часа;
+- retentionSize: 1 GB.
+
+### 8. Остаточные ограничения
+
+StorageClass и PVC в кластере отсутствуют. Prometheus, Alertmanager и Grafana временно используют EmptyDir.
+
+При пересоздании соответствующего pod локальные данные будут потеряны. Это принято как временное ограничение до отдельного этапа настройки постоянного хранилища.
+
+Playbook допускает безопасный повторный запуск, однако каждый вызов `helm upgrade` может создавать новую ревизию Helm даже при отсутствии фактических изменений.
+
+### 9. Предупреждающие мероприятия
+
+Для последующих установок необходимо:
+
+1. Фиксировать версию каждого Helm chart.
+2. Проверять доступность версии до установки.
+3. Хранить параметры Helm в отдельном values-файле.
+4. Выполнять Helm только с одного управляющего узла.
+5. Использовать `upgrade --install`, `atomic` и `wait`.
+6. Проверять созданные Custom Resources, а не только пользовательские Helm values.
+7. Определять requests и limits по фактическому потреблению компонентов.
+8. Проверять установку повторным запуском playbook.
+9. Добавить проверку YAML и Helm values в CI.
+10. Настроить постоянное хранилище до перехода к длительному хранению метрик.
+```
+
+Выполняю проброс портов через Jump-хост и проверяю доступность через браузер:
+
+Grafana: http://127.0.0.1:3000
+![Графана](image-109.png)
+
+Prometheus: http://127.0.0.1:9090
+![Прометеус](image-110.png)
+
+Alertmanager: http://127.0.0.1:9093
+![Алерт-manager](image-111.png)
+
+В Grafana использовал пользователя admin и текущий пароль из вывода:
+```
+ssh k8s-master-ru-central1-a \
+  "sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf \
+  get secret kube-prometheus-stack-grafana \
+  -n monitoring \
+  -o jsonpath='{.data.admin-password}'" \
+| base64 --decode
+
+echo
+
+```
+!Пароль скомпрометирован специально и будет сразу изменен.
+
+Используем  Ansible Vault, Kubernetes Secret и ссылку из Grafana на этот Secret. 
+Старый Helm Secret не будет удаляеться, при ошибке --atomic и выполнит откат.
+
+![Vault позволяет скрывать пароли](image-112.png)
+
+Порядок применения:
+
+1.Применяем парль через ansible
+
+```
+cd /home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray
+source /home/vgorshkov/venv-kubespray-2.31.0/bin/activate
+
+echo "===== ПРОВЕРКА КОНФИГУРАЦИИ ====="
+
+CONFIG_READY="yes"
+
+grep -q 'vault-monitoring.yml' playbooks/install-monitoring.yml || CONFIG_READY="no"
+grep -q 'grafana-admin-credentials' playbooks/install-monitoring.yml || CONFIG_READY="no"
+grep -q 'existingSecret.*grafana-admin-credentials' playbooks/kube-prometheus-stack-values.yml || CONFIG_READY="no"
+
+if [ "$CONFIG_READY" = "yes" ]; then
+    echo "Конфигурация готова. Запускаем Ansible."
+    echo
+
+    ansible-playbook \
+        -i inventory/hosts.yaml \
+        --become \
+        --become-user=root \
+        --ask-vault-pass \
+        playbooks/install-monitoring.yml
+else
+    echo "Установка не запущена: в playbook или values отсутствуют настройки нового Secret."
+fi
+
+unset CONFIG_READY
+
+```
+
+2.Вводишь пароль Ansible Vault. Успешный итог должен содержать: failed=0
+
+3.Проверяем Secret и Grafana
+
+```
+ssh k8s-master-ru-central1-a '
+KUBECTL="sudo kubectl --kubeconfig=/etc/kubernetes/admin.conf"
+
+echo "===== SECRET GRAFANA ====="
+$KUBECTL get secret grafana-admin-credentials \
+    -n monitoring \
+    -o custom-columns="NAME:.metadata.name,TYPE:.type,CREATED:.metadata.creationTimestamp"
+
+echo
+echo "===== SECRET В DEPLOYMENT ====="
+$KUBECTL get deployment kube-prometheus-stack-grafana \
+    -n monitoring \
+    -o jsonpath="{.spec.template.spec.containers[?(@.name==\"grafana\")].env[?(@.name==\"GF_SECURITY_ADMIN_PASSWORD\")].valueFrom.secretKeyRef.name}"
+echo
+
+echo
+echo "===== СОСТОЯНИЕ GRAFANA ====="
+$KUBECTL rollout status \
+    deployment/kube-prometheus-stack-grafana \
+    -n monitoring \
+    --timeout=180s
+
+$KUBECTL get pods \
+    -n monitoring \
+    -l app.kubernetes.io/name=grafana \
+    -o wide
+'
+
+```
+
+4. В разделе SECRET В DEPLOYMENT должно появиться: grafana-admin-credentials
+
+
+5. Поднимаем или проверяем SSH-туннель
+```
+MASTER_HOST="k8s-master-ru-central1-a"
+KUBECONFIG_PATH="/etc/kubernetes/admin.conf"
+TUNNEL_SOCKET="/tmp/diplom-monitoring-tunnel-$(id -u).sock"
+
+GRAFANA_IP=$(ssh "$MASTER_HOST" \
+    "sudo kubectl --kubeconfig=$KUBECONFIG_PATH get service kube-prometheus-stack-grafana -n monitoring -o jsonpath='{.spec.clusterIP}'")
+
+if ssh -S "$TUNNEL_SOCKET" -O check "$MASTER_HOST" >/dev/null 2>&1; then
+    echo "SSH-туннель уже работает."
+else
+    rm -f -- "$TUNNEL_SOCKET"
+
+    ssh \
+        -M \
+        -S "$TUNNEL_SOCKET" \
+        -fNT \
+        -o ExitOnForwardFailure=yes \
+        -o ServerAliveInterval=30 \
+        -o ServerAliveCountMax=3 \
+        -L "127.0.0.1:3000:${GRAFANA_IP}:80" \
+        "$MASTER_HOST"
+fi
+
+echo
+echo "Grafana доступна по адресу:"
+echo "http://127.0.0.1:3000"
+```
+
+
+
+6. Открывай в браузере:
+или проверить авторизацию без сохранения пароля в истории:
+```
+curl \
+    --fail \
+    --silent \
+    --show-error \
+    --user admin \
+    http://127.0.0.1:3000/api/user
+
+echo
+```
+
 

@@ -175,7 +175,7 @@ resource "yandex_compute_instance" "k8s_worker" {
 
   resources {
     cores         = 2
-    memory        = 2
+    memory        = 3
     core_fraction = 20
   }
 

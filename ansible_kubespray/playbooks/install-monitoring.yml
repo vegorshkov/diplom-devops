@@ -1,0 +1,396 @@
+---
+- name: Установка и обновление kube-prometheus-stack
+  hosts: kube_control_plane
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - "{{ playbook_dir }}/../group_vars/vault-monitoring.yml"
+
+  vars:
+    helm_binary: /usr/local/bin/helm
+    kubectl_binary: kubectl
+    kubeconfig_path: /etc/kubernetes/admin.conf
+
+    monitoring_namespace: monitoring
+    monitoring_release: kube-prometheus-stack
+    monitoring_chart: prometheus-community/kube-prometheus-stack
+    monitoring_chart_version: "88.3.0"
+
+    monitoring_control_plane: "{{ groups['kube_control_plane'][0] }}"
+    monitoring_values_source: "{{ playbook_dir }}/kube-prometheus-stack-values.yml"
+    monitoring_values_remote: /etc/kubernetes/kube-prometheus-stack-values.yml
+
+    grafana_admin_secret_name: grafana-admin-credentials
+
+    grafana_admin_secret_definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: "{{ grafana_admin_secret_name }}"
+        namespace: "{{ monitoring_namespace }}"
+        labels:
+          app.kubernetes.io/name: grafana
+          app.kubernetes.io/part-of: kube-prometheus-stack
+          app.kubernetes.io/managed-by: Ansible
+      type: Opaque
+      stringData:
+        admin-user: "{{ vault_grafana_admin_user }}"
+        admin-password: "{{ vault_grafana_admin_password }}"
+
+  tasks:
+    - name: Выполнить установку с первого control-plane узла
+      run_once: true
+      delegate_to: "{{ monitoring_control_plane }}"
+
+      block:
+        - name: Проверить переменные учётной записи Grafana
+          ansible.builtin.assert:
+            that:
+              - vault_grafana_admin_user is string
+              - vault_grafana_admin_user == "admin"
+              - vault_grafana_admin_password is string
+              - vault_grafana_admin_password | length >= 20
+              - "'\n' not in vault_grafana_admin_password"
+            fail_msg: >-
+              Проверьте переменные Grafana в зашифрованном
+              файле group_vars/vault-monitoring.yml.
+          no_log: true
+
+        - name: Проверить наличие kubeconfig
+          ansible.builtin.stat:
+            path: "{{ kubeconfig_path }}"
+          register: kubeconfig_stat
+
+        - name: Проверить результат поиска kubeconfig
+          ansible.builtin.assert:
+            that:
+              - kubeconfig_stat.stat.exists
+              - kubeconfig_stat.stat.isreg
+            fail_msg: >-
+              Файл kubeconfig {{ kubeconfig_path }}
+              не найден на узле {{ monitoring_control_plane }}.
+
+        - name: Проверить наличие Helm
+          ansible.builtin.stat:
+            path: "{{ helm_binary }}"
+          register: helm_binary_stat
+
+        - name: Проверить результат поиска Helm
+          ansible.builtin.assert:
+            that:
+              - helm_binary_stat.stat.exists
+              - helm_binary_stat.stat.isreg
+              - helm_binary_stat.stat.executable
+            fail_msg: >-
+              Исполняемый файл Helm {{ helm_binary }}
+              не найден на узле {{ monitoring_control_plane }}.
+
+        - name: Проверить готовность Kubernetes API
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - "--raw=/readyz"
+          register: api_health
+          changed_when: false
+          failed_when: >-
+            api_health.rc != 0 or
+            'ok' not in api_health.stdout
+
+        - name: Добавить или обновить репозиторий Prometheus Community
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - repo
+              - add
+              - prometheus-community
+              - https://prometheus-community.github.io/helm-charts
+              - --force-update
+          changed_when: false
+
+        - name: Обновить индекс репозиториев Helm
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - repo
+              - update
+          changed_when: false
+
+        - name: Проверить наличие зафиксированной версии Helm chart
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - show
+              - chart
+              - "{{ monitoring_chart }}"
+              - --version
+              - "{{ monitoring_chart_version }}"
+          changed_when: false
+
+        - name: Проверить наличие namespace monitoring
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - namespace
+              - "{{ monitoring_namespace }}"
+          register: namespace_check
+          changed_when: false
+          failed_when: namespace_check.rc not in [0, 1]
+
+        - name: Создать namespace monitoring
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - create
+              - namespace
+              - "{{ monitoring_namespace }}"
+          when: namespace_check.rc == 1
+          changed_when: true
+
+        - name: Создать или обновить Secret администратора Grafana
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - apply
+              - --filename=-
+            stdin: "{{ grafana_admin_secret_definition | to_nice_yaml(indent=2) }}"
+            stdin_add_newline: true
+          register: grafana_secret_apply
+          changed_when: >-
+            'created' in grafana_secret_apply.stdout or
+            'configured' in grafana_secret_apply.stdout
+          no_log: true
+
+        - name: Проверить наличие Secret администратора Grafana
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - secret
+              - "{{ grafana_admin_secret_name }}"
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --output=name
+          register: grafana_secret_check
+          changed_when: false
+          failed_when: >-
+            grafana_secret_check.rc != 0 or
+            grafana_admin_secret_name not in grafana_secret_check.stdout
+
+        - name: Разместить values-файл на control-plane узле
+          ansible.builtin.copy:
+            src: "{{ monitoring_values_source }}"
+            dest: "{{ monitoring_values_remote }}"
+            owner: root
+            group: root
+            mode: "0644"
+
+        - name: Установить или обновить kube-prometheus-stack
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - upgrade
+              - --install
+              - "{{ monitoring_release }}"
+              - "{{ monitoring_chart }}"
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --create-namespace
+              - --version
+              - "{{ monitoring_chart_version }}"
+              - --kubeconfig
+              - "{{ kubeconfig_path }}"
+              - --values
+              - "{{ monitoring_values_remote }}"
+              - --reset-values
+              - --atomic
+              - --wait
+              - --timeout
+              - 10m
+              - --history-max
+              - "5"
+          register: helm_result
+          changed_when: true
+
+        - name: Дождаться готовности StatefulSet Prometheus
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - rollout
+              - status
+              - statefulset/prometheus-kube-prometheus-stack-prometheus
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --timeout=300s
+          changed_when: false
+
+        - name: Дождаться готовности StatefulSet Alertmanager
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - rollout
+              - status
+              - statefulset/alertmanager-kube-prometheus-stack-alertmanager
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --timeout=300s
+          changed_when: false
+
+        - name: Дождаться готовности Deployment Grafana
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - rollout
+              - status
+              - deployment/kube-prometheus-stack-grafana
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --timeout=300s
+          changed_when: false
+
+        - name: Проверить ссылку Grafana на внешний Secret
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - deployment
+              - kube-prometheus-stack-grafana
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - >-
+                --output=jsonpath={.spec.template.spec.containers[?(@.name=="grafana")].env[?(@.name=="GF_SECURITY_ADMIN_PASSWORD")].valueFrom.secretKeyRef.name}
+          register: grafana_secret_reference
+          changed_when: false
+
+        - name: Проверить имя Secret в Deployment Grafana
+          ansible.builtin.assert:
+            that:
+              - grafana_secret_reference.stdout == grafana_admin_secret_name
+            fail_msg: >-
+              Deployment Grafana не использует Secret
+              {{ grafana_admin_secret_name }}.
+
+        - name: Получить состояние Helm release
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - list
+              - --namespace
+              - "{{ monitoring_namespace }}"
+          register: helm_status
+          changed_when: false
+
+        - name: Получить применённые Helm values
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - get
+              - values
+              - "{{ monitoring_release }}"
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --kubeconfig
+              - "{{ kubeconfig_path }}"
+              - --output
+              - yaml
+          register: applied_values
+          changed_when: false
+
+        - name: Получить состояние pod мониторинга
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - pods
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --output=wide
+          register: pods_status
+          changed_when: false
+
+        - name: Получить потребление ресурсов pod мониторинга
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - top
+              - pods
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --containers
+          register: monitoring_usage
+          changed_when: false
+
+        - name: Получить параметры Prometheus
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - prometheus
+              - kube-prometheus-stack-prometheus
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --output=jsonpath={.spec.retention}{'\t'}{.spec.retentionSize}{'\t'}{.spec.resources.requests.memory}{'\t'}{.spec.resources.limits.memory}{'\n'}
+          register: prometheus_configuration
+          changed_when: false
+
+        - name: Получить параметры Alertmanager
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - alertmanager
+              - kube-prometheus-stack-alertmanager
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --output=jsonpath={.spec.retention}{'\t'}{.spec.resources.requests.memory}{'\t'}{.spec.resources.limits.memory}{'\n'}
+          register: alertmanager_configuration
+          changed_when: false
+
+        - name: Вывести состояние Helm release
+          ansible.builtin.debug:
+            var: helm_status.stdout_lines
+
+        - name: Вывести применённые Helm values
+          ansible.builtin.debug:
+            var: applied_values.stdout_lines
+
+        - name: Вывести состояние pod мониторинга
+          ansible.builtin.debug:
+            var: pods_status.stdout_lines
+
+        - name: Вывести потребление ресурсов
+          ansible.builtin.debug:
+            var: monitoring_usage.stdout_lines
+
+        - name: Вывести параметры Prometheus
+          ansible.builtin.debug:
+            msg: >-
+              retention, retentionSize, request memory, limit memory:
+              {{ prometheus_configuration.stdout }}
+
+        - name: Вывести параметры Alertmanager
+          ansible.builtin.debug:
+            msg: >-
+              retention, request memory, limit memory:
+              {{ alertmanager_configuration.stdout }}
+
+        - name: Вывести используемый Secret Grafana
+          ansible.builtin.debug:
+            msg: >-
+              Grafana использует Kubernetes Secret:
+              {{ grafana_secret_reference.stdout }}
