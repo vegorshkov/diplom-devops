@@ -1,0 +1,208 @@
+---
+- name: Публикация Grafana через Traefik и Yandex ALB
+  hosts: kube_control_plane
+  gather_facts: false
+  become: true
+
+  vars:
+    helm_binary: /usr/local/bin/helm
+    kubectl_binary: kubectl
+    kubeconfig_path: /etc/kubernetes/admin.conf
+
+    monitoring_namespace: monitoring
+    monitoring_release: kube-prometheus-stack
+    monitoring_chart: prometheus-community/kube-prometheus-stack
+    monitoring_chart_version: "88.3.0"
+
+    monitoring_control_plane: "{{ groups['kube_control_plane'][0] }}"
+
+    monitoring_values_source: >-
+      {{ playbook_dir }}/kube-prometheus-stack-values.yml
+    monitoring_values_remote: >-
+      /etc/kubernetes/kube-prometheus-stack-values.yml
+
+    grafana_ingress_source: >-
+      {{ playbook_dir }}/../../k8s_monitoring/ingress/grafana.yaml
+    grafana_ingress_remote: >-
+      /etc/kubernetes/grafana-public-ingress.yaml
+
+    grafana_root_url: ""
+
+  tasks:
+    - name: Выполнить настройку с первого control-plane узла
+      run_once: true
+      delegate_to: "{{ monitoring_control_plane }}"
+
+      block:
+        - name: Проверить публичный URL Grafana
+          ansible.builtin.assert:
+            that:
+              - grafana_root_url is string
+              - grafana_root_url | length > 20
+              - grafana_root_url.startswith('http://')
+              - grafana_root_url.endswith('/grafana/')
+            fail_msg: >-
+              Передайте grafana_root_url из Terraform output.
+
+        - name: Проверить готовность Kubernetes API
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - "--raw=/readyz"
+          register: kubernetes_api_health
+          changed_when: false
+          failed_when: >-
+            kubernetes_api_health.rc != 0 or
+            'ok' not in kubernetes_api_health.stdout
+
+        - name: Обновить репозиторий Prometheus Community
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - repo
+              - add
+              - prometheus-community
+              - https://prometheus-community.github.io/helm-charts
+              - --force-update
+          changed_when: false
+
+        - name: Обновить индекс Helm
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - repo
+              - update
+          changed_when: false
+
+        - name: Проверить зафиксированную версию monitoring chart
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - show
+              - chart
+              - "{{ monitoring_chart }}"
+              - --version
+              - "{{ monitoring_chart_version }}"
+          changed_when: false
+
+        - name: Скопировать обновлённые monitoring values
+          ansible.builtin.copy:
+            src: "{{ monitoring_values_source }}"
+            dest: "{{ monitoring_values_remote }}"
+            owner: root
+            group: root
+            mode: "0644"
+
+        - name: Обновить kube-prometheus-stack
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - upgrade
+              - --install
+              - "{{ monitoring_release }}"
+              - "{{ monitoring_chart }}"
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --create-namespace
+              - --version
+              - "{{ monitoring_chart_version }}"
+              - --kubeconfig
+              - "{{ kubeconfig_path }}"
+              - --values
+              - "{{ monitoring_values_remote }}"
+              - --reset-values
+              - --atomic
+              - --wait
+              - --timeout
+              - 10m
+              - --history-max
+              - "5"
+          changed_when: true
+
+        - name: Дождаться готовности Grafana
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - rollout
+              - status
+              - deployment/kube-prometheus-stack-grafana
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --timeout=300s
+          changed_when: false
+
+        - name: Скопировать Ingress Grafana
+          ansible.builtin.copy:
+            src: "{{ grafana_ingress_source }}"
+            dest: "{{ grafana_ingress_remote }}"
+            owner: root
+            group: root
+            mode: "0644"
+
+        - name: Проверить Ingress Grafana без применения
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - apply
+              - --dry-run=server
+              - --filename
+              - "{{ grafana_ingress_remote }}"
+          changed_when: false
+
+        - name: Применить Ingress Grafana
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - apply
+              - --filename
+              - "{{ grafana_ingress_remote }}"
+          register: grafana_ingress_apply
+          changed_when: >-
+            'created' in grafana_ingress_apply.stdout or
+            'configured' in grafana_ingress_apply.stdout
+
+        - name: Получить сгенерированный grafana.ini
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - configmap
+              - kube-prometheus-stack-grafana
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - >-
+                --output=jsonpath={.data.grafana\.ini}
+          register: grafana_ini
+          changed_when: false
+
+        - name: Проверить настройки подкаталога Grafana
+          ansible.builtin.assert:
+            that:
+              - grafana_root_url in grafana_ini.stdout
+              - "'serve_from_sub_path = true' in grafana_ini.stdout"
+            fail_msg: >-
+              root_url или serve_from_sub_path отсутствует
+              в сгенерированном grafana.ini.
+
+        - name: Получить состояние Grafana и Ingress
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - deployment,service,pods,ingress
+              - --namespace
+              - "{{ monitoring_namespace }}"
+              - --output=wide
+          register: grafana_status
+          changed_when: false
+
+        - name: Показать состояние Grafana
+          ansible.builtin.debug:
+            var: grafana_status.stdout_lines

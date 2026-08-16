@@ -1,0 +1,161 @@
+---
+- name: Настройка endpoint метрик kube-proxy
+  hosts: kube_control_plane
+  gather_facts: false
+  become: true
+
+  vars:
+    kubectl_binary: /usr/local/bin/kubectl
+    kubeconfig_path: /etc/kubernetes/admin.conf
+
+    kube_proxy_namespace: kube-system
+    kube_proxy_configmap: kube-proxy
+    kube_proxy_daemonset: kube-proxy
+    expected_metrics_bind_address: "0.0.0.0:10249"
+
+    monitoring_control_plane: "{{ groups['kube_control_plane'][0] }}"
+
+  tasks:
+    - name: Выполнить настройку на первом control-plane
+      run_once: true
+      delegate_to: "{{ monitoring_control_plane }}"
+
+      block:
+        - name: Получить текущую конфигурацию kube-proxy
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - configmap
+              - "{{ kube_proxy_configmap }}"
+              - --namespace
+              - "{{ kube_proxy_namespace }}"
+              - '--output=jsonpath={.data.config\.conf}'
+          register: kube_proxy_config_current
+          changed_when: false
+
+        - name: Проверить наличие параметра metricsBindAddress
+          ansible.builtin.assert:
+            that:
+              - "'metricsBindAddress:' in kube_proxy_config_current.stdout"
+            fail_msg: >-
+              Параметр metricsBindAddress не найден в ConfigMap
+              {{ kube_proxy_configmap }}.
+
+        - name: Подготовить обновлённую конфигурацию kube-proxy
+          ansible.builtin.set_fact:
+            kube_proxy_config_updated: >-
+              {{
+                kube_proxy_config_current.stdout
+                | regex_replace(
+                    'metricsBindAddress: .*',
+                    'metricsBindAddress: ' ~ expected_metrics_bind_address
+                  )
+              }}
+
+        - name: Обновить metricsBindAddress в ConfigMap kube-proxy
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - patch
+              - configmap
+              - "{{ kube_proxy_configmap }}"
+              - --namespace
+              - "{{ kube_proxy_namespace }}"
+              - --type=merge
+              - >-
+                --patch={{
+                  {
+                    'data': {
+                      'config.conf': kube_proxy_config_updated
+                    }
+                  } | to_json
+                }}
+          when: >-
+            ('metricsBindAddress: ' ~ expected_metrics_bind_address)
+            not in kube_proxy_config_current.stdout
+          register: kube_proxy_patch
+          changed_when: true
+
+        - name: Перезапустить DaemonSet kube-proxy
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - rollout
+              - restart
+              - "daemonset/{{ kube_proxy_daemonset }}"
+              - --namespace
+              - "{{ kube_proxy_namespace }}"
+          when: kube_proxy_patch.changed
+          changed_when: true
+
+        - name: Дождаться готовности DaemonSet kube-proxy
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - rollout
+              - status
+              - "daemonset/{{ kube_proxy_daemonset }}"
+              - --namespace
+              - "{{ kube_proxy_namespace }}"
+              - --timeout=180s
+          changed_when: false
+
+        - name: Получить итоговую конфигурацию kube-proxy
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - configmap
+              - "{{ kube_proxy_configmap }}"
+              - --namespace
+              - "{{ kube_proxy_namespace }}"
+              - '--output=jsonpath={.data.config\.conf}'
+          register: kube_proxy_config_after
+          changed_when: false
+
+        - name: Получить итоговую строку metricsBindAddress
+          ansible.builtin.set_fact:
+            kube_proxy_metrics_line: >-
+              {{
+                kube_proxy_config_after.stdout
+                | regex_search('metricsBindAddress: .*')
+                | default('', true)
+              }}
+
+        - name: Проверить итоговый адрес endpoint метрик
+          ansible.builtin.assert:
+            that:
+              - >-
+                kube_proxy_metrics_line ==
+                'metricsBindAddress: ' ~ expected_metrics_bind_address
+            fail_msg: >-
+              После применения получено значение:
+              {{ kube_proxy_metrics_line }}
+            success_msg: >-
+              kube-proxy публикует метрики на
+              {{ expected_metrics_bind_address }}.
+
+        - name: Получить состояние pod kube-proxy
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - pods
+              - --namespace
+              - "{{ kube_proxy_namespace }}"
+              - --selector
+              - k8s-app=kube-proxy
+              - --output=wide
+          register: kube_proxy_pods
+          changed_when: false
+
+        - name: Вывести состояние pod kube-proxy
+          ansible.builtin.debug:
+            var: kube_proxy_pods.stdout_lines

@@ -1043,5 +1043,786 @@ curl \
 
 echo
 ```
+Производим перегенерацию паролей
+![alt text](image-113.png)
+
+Проверка vault пароля
+![alt text](image-114.png)
+
+Обновляем пароль для Grafana через Ansible Vault
+```
+cd /home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray
+source /home/vgorshkov/venv-kubespray-2.31.0/bin/activate
+
+ansible-playbook \
+    -i /home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/inventory/hosts.yaml \
+    --become \
+    --become-user=root \
+    --ask-vault-pass \
+    /home/vgorshkov/STUDENT1/PROJECT/diplom-devops/ansible_kubespray/playbooks/install-monitoring.yml
+```
+![Обновление пароля](image-116.png)
+
+Передеплой Мониторинга:
+![alt text](image-117.png)
+![alt text](image-118.png)
+![alt text](image-119.png)
+![alt text](image-120.png)
+![alt text](image-121.png)
+
+Посмотрим дашборд:
+![alt text](image-122.png)
+![alt text](image-123.png)
+![alt text](image-124.png)
+![alt text](image-125.png)
+![alt text](image-126.png)
+
+
+Grafana - доступна, пароль работает, версия 13.1.3
+Prometheus - 42 из 48 целей здоровы
+Alertmanager - работает
+Все поды - в статусе Running
+ServiceMonitors - 13 штук
+PrometheusRules - 35 штук
+
+![alt text](image-127.png)
+
+
+Перейдем к настройке балансированного доступа к нашим сервисам из сети интернет, позащищенному каналу связи.
+Используем возможности (существующие) облачного провайдера Yandex Cloud.
+
+### Схема организации доступов к нашим ресурсам:
+![Listeners-Schemas](image-128.png)
+
+Таблица №1 Ingress by New External Domain
+
+| Уровень | Средство | Назначение |
+|---|---|---|
+| **Yandex Cloud** | Terraform Provider | ALB, статический IP, target/backend группы, HTTPS listener, security groups |
+| **Сертификат** | Existing Certificate Manager ID | Подключение к ALB без выпуска нового сертификата |
+| **Kubernetes** | Helm | Traefik в режиме DaemonSet для маршрутизации |
+| **Маршрутизация** | Kubernetes Ingress | Приложение (/, /api, /ws) и Grafana (/grafana) через один домен |
+| **Применение** | Terraform + kubectl/Helm | Полное управление без использования yc CLI (отключено провайдером) |
+
+
+Архитектура доступа (IP-based, HTTP, без домена):
+
+Таблица №2 Ingress External IP
+| Уровень | Средство | Назначение |
+|---|---|---|
+| **Клиент** | Браузер / curl | Доступ по HTTP на IP worker-узла: `http://<IP>:30080/grafana` |
+| **Kubernetes** | Service (NodePort) | Traefik слушает на порту `30080` на всех worker-узлах |
+| **Kubernetes** | Ingress (Traefik) | Маршрутизация запросов по пути `/grafana` → Service Grafana (порт 80) |
+| **Приложение** | Grafana Pod | Раздача интерфейса, авторизация через admin-секрет |
+| **Конфигурация** | `k8s_monitoring/ingress/grafana.yaml` | Временный Ingress для теста, без TLS |
+
+Таблица №3 Ingreass  Architecture access
+| Компонент | Описание |
+|---|---|
+| **Клиент** | `http://<IP_worker>:30080/grafana` |
+| **NodePort** | 30080 на всех worker-узлах |
+| **Ingress Controller** | Traefik, маршрут `/grafana` |
+| **Service** | `kube-prometheus-stack-grafana:80` |
+| **Pod** | Grafana v13.1.3 |
+
+Таблица №4 Ingress Route Map
+| Уровень | Средство | Назначение |
+|---|---|---|
+| **Клиент** | Браузер / curl | Доступ по HTTP на IP worker-узла: `http://<IP>:30080/grafana` |
+| **Kubernetes** | Service (NodePort) | Traefik слушает на порту `30080` на всех worker-узлах |
+| **Kubernetes** | Ingress (Traefik) | Маршрутизация запросов по пути `/grafana` → Service Grafana (порт 80) |
+| **Приложение** | Grafana Pod | Раздача интерфейса, авторизация через admin-секрет |
+| **Конфигурация** | `k8s_monitoring/ingress/grafana.yaml` | Временный Ingress для теста, без TLS |
+
+
+Проверям окружение.
+
+| Компонент | Статус | Подробности |
+|---|---|---|
+| **Kubernetes кластер** | Работает | 6 нод (3 master + 3 worker), все системы готовы |
+| **Traefik Ingress** | Установлен | DaemonSet на 3 worker-узлах, NodePort 30080 |
+| **Grafana** | +Работает | Версия 13.1.3, доступ по HTTP через Traefik |
+| **Prometheus** | +Работает | 48/48 targets healthy, retention 24h |
+| **Alertmanager** | +Работает | Только Watchdog firing (нормально) |
+| **kube-proxy метрики** | +Исправлены | Все 6 нод публикуют метрики на 0.0.0.0:10249 |
+| **Ingress для приложения** | +Применён | `infra-public` на `/` → Service infra:8080 |
+| **Ingress для Grafana** | =>Готов, не применён | `grafana-public` на `/grafana` → Grafana:80 |
+| **Yandex ALB** | =>В плане | Будет добавлен через Terraform с HTTPS и сертификатом |
+| **Persistent Storage** | =>В плане | Нужно добавить PVC для Prometheus и Grafana |
+
+
+Произведем развертывание балансировщика с помощью терраформ:
+
+![alt text](image-130.png)
+![alt text](image-131.png)
+![alt text](image-132.png)
+![alt text](image-133.png)
+![alt text](image-134.png)
+![alt text](image-135.png)
+![alt text](image-136.png)
+
+Балансировщик развернут:
+
+![Балансировщик-Доступа](image-129.png)
+
+![alt text](image-137.png)
+
+![alt text](image-138.png)
+
+![alt text](image-139.png)
+
+Доступ открыт:
+![Access_by_Ext_IP](image-140.png)
+
+
+Произведем открытие доступа к приложению:
+Блок кода: Развёртывание приложения. 
+Блок идемпотентен: сначала импортирует образ на все три worker-узла и только после этого обновляет Kubernetes.
+```
+PROJECT_DIR="/home/vgorshkov/STUDENT1/PROJECT/diplom-devops"
+ANSIBLE_DIR="$PROJECT_DIR/ansible_kubespray"
+TERRAFORM_DIR="$PROJECT_DIR/terraform_infra"
+
+DEPLOYMENT_FILE="$PROJECT_DIR/infra/k8s/deployment.yaml"
+IMAGE_ARCHIVE="/tmp/diplom-infra-prometheus.tar"
+IMAGE_REF_FILE="/tmp/diplom-infra-image-reference.txt"
+
+PLAYBOOK_FILE="$ANSIBLE_DIR/playbooks/deploy-infra-monitoring.yml"
+PLAYBOOK_BACKUP="$PLAYBOOK_FILE.before-infra-monitoring"
+
+APPLICATION_URL_FILE="/tmp/diplom-application-url-monitoring.txt"
+GRAFANA_URL_FILE="/tmp/diplom-grafana-url-monitoring.txt"
+PUBLIC_HEALTH_FILE="/tmp/diplom-infra-public-health.json"
+GRAFANA_HEALTH_FILE="/tmp/diplom-grafana-public-health.json"
+
+cd "$PROJECT_DIR"
+
+printf '\n===== 1. ПОЛУЧЕНИЕ IMAGE ИЗ DEPLOYMENT =====\n'
+
+python3 - "$DEPLOYMENT_FILE" "$IMAGE_REF_FILE" <<'PY'
+import sys
+import yaml
+
+deployment_path = sys.argv[1]
+output_path = sys.argv[2]
+
+with open(deployment_path, encoding="utf-8") as stream:
+    deployment = yaml.safe_load(stream)
+
+containers = deployment["spec"]["template"]["spec"]["containers"]
+images = [
+    container["image"]
+    for container in containers
+    if container.get("name") == "infra"
+]
+
+if len(images) != 1:
+    raise RuntimeError(
+        f"Ожидался один контейнер infra, обнаружено: {len(images)}"
+    )
+
+with open(output_path, "w", encoding="utf-8") as stream:
+    stream.write(images[0] + "\n")
+
+print(f"Image из Deployment: {images[0]}")
+PY
+
+IMAGE_READ_RC=$?
+
+read -r IMAGE_REF < "$IMAGE_REF_FILE"
+
+printf 'Image reference: %s\n' "$IMAGE_REF"
+printf 'Код чтения Deployment: %s\n' "$IMAGE_READ_RC"
+
+printf '\n===== 2. ПРОВЕРКА ЛОКАЛЬНОГО ОБРАЗА И АРХИВА =====\n'
+
+DEPLOY_READY=1
+
+if [[ "$IMAGE_READ_RC" -ne 0 ]]; then
+    DEPLOY_READY=0
+fi
+
+if [[ "$IMAGE_REF" != docker.io/library/infra:metrics-* ]]; then
+    printf 'ОШИБКА: неожиданный image reference: %s\n' "$IMAGE_REF"
+    DEPLOY_READY=0
+fi
+
+if [[ -f "$IMAGE_ARCHIVE" ]]; then
+    ls -lh "$IMAGE_ARCHIVE"
+else
+    printf 'ОШИБКА: архив образа не найден: %s\n' "$IMAGE_ARCHIVE"
+    DEPLOY_READY=0
+fi
+
+docker image inspect \
+    --format 'IMAGE={{index .RepoTags 0}} ID={{.Id}} SIZE={{.Size}}' \
+    "$IMAGE_REF"
+
+IMAGE_INSPECT_RC=$?
+
+if [[ "$IMAGE_INSPECT_RC" -ne 0 ]]; then
+    printf 'ОШИБКА: локальный Docker image не найден.\n'
+    DEPLOY_READY=0
+fi
+
+printf 'Готовность к развёртыванию: %s\n' "$DEPLOY_READY"
+
+if [[ "$DEPLOY_READY" -eq 1 ]]; then
+
+    printf '\n===== 3. РЕЗЕРВНАЯ КОПИЯ PLAYBOOK =====\n'
+
+    if [[ -f "$PLAYBOOK_FILE" && ! -e "$PLAYBOOK_BACKUP" ]]; then
+        cp -a "$PLAYBOOK_FILE" "$PLAYBOOK_BACKUP"
+        printf 'Создана копия: %s\n' "$PLAYBOOK_BACKUP"
+    elif [[ -e "$PLAYBOOK_BACKUP" ]]; then
+        printf 'Копия уже существует: %s\n' "$PLAYBOOK_BACKUP"
+    else
+        printf 'Новый playbook будет создан без замены существующего файла.\n'
+    fi
+
+    printf '\n===== 4. СОЗДАНИЕ PLAYBOOK =====\n'
+
+    cat > "$PLAYBOOK_FILE" <<'EOF'
+---
+- name: Размещение образа infra на Kubernetes worker-узлах
+  hosts: kube_node
+  gather_facts: false
+  become: true
+  serial: 1
+  any_errors_fatal: true
+
+  vars:
+    containerd_namespace: k8s.io
+    image_archive_remote: /var/tmp/diplom-infra-prometheus.tar
+
+  tasks:
+    - name: Проверить входные параметры образа
+      ansible.builtin.assert:
+        that:
+          - infra_image_reference is defined
+          - infra_image_reference | length > 0
+          - infra_image_archive is defined
+          - infra_image_archive | length > 0
+        fail_msg: Не переданы infra_image_reference или infra_image_archive.
+
+    - name: Получить список образов containerd до импорта
+      ansible.builtin.command:
+        argv:
+          - ctr
+          - --namespace
+          - "{{ containerd_namespace }}"
+          - images
+          - list
+          - --quiet
+      register: containerd_images_before
+      changed_when: false
+
+    - name: Скопировать архив образа на worker
+      ansible.builtin.copy:
+        src: "{{ infra_image_archive }}"
+        dest: "{{ image_archive_remote }}"
+        owner: root
+        group: root
+        mode: "0644"
+      when: infra_image_reference not in containerd_images_before.stdout_lines
+
+    - name: Импортировать образ в containerd
+      ansible.builtin.command:
+        argv:
+          - ctr
+          - --namespace
+          - "{{ containerd_namespace }}"
+          - images
+          - import
+          - "{{ image_archive_remote }}"
+      register: containerd_import
+      changed_when: true
+      when: infra_image_reference not in containerd_images_before.stdout_lines
+
+    - name: Получить список образов containerd после импорта
+      ansible.builtin.command:
+        argv:
+          - ctr
+          - --namespace
+          - "{{ containerd_namespace }}"
+          - images
+          - list
+          - --quiet
+      register: containerd_images_after
+      changed_when: false
+
+    - name: Проверить наличие образа на worker
+      ansible.builtin.assert:
+        that:
+          - infra_image_reference in containerd_images_after.stdout_lines
+        fail_msg: >-
+          Образ {{ infra_image_reference }} не найден на
+          {{ inventory_hostname }} после импорта.
+
+- name: Развёртывание метрик приложения и ServiceMonitor
+  hosts: k8s-master-ru-central1-a
+  gather_facts: false
+  become: true
+  any_errors_fatal: true
+
+  vars:
+    kubectl_binary: kubectl
+    kubeconfig_path: /etc/kubernetes/admin.conf
+    remote_manifest_dir: /etc/kubernetes/diplom
+
+    manifest_files:
+      - source: "{{ playbook_dir }}/../../infra/k8s/pdb.yaml"
+        remote: "{{ remote_manifest_dir }}/infra-pdb.yaml"
+      - source: "{{ playbook_dir }}/../../infra/k8s/service.yaml"
+        remote: "{{ remote_manifest_dir }}/infra-service.yaml"
+      - source: "{{ playbook_dir }}/../../k8s_monitoring/servicemonitors/infra.yaml"
+        remote: "{{ remote_manifest_dir }}/infra-servicemonitor.yaml"
+      - source: "{{ playbook_dir }}/../../infra/k8s/deployment.yaml"
+        remote: "{{ remote_manifest_dir }}/infra-deployment.yaml"
+
+  tasks:
+    - name: Проверить kubeconfig
+      ansible.builtin.stat:
+        path: "{{ kubeconfig_path }}"
+      register: kubeconfig_stat
+
+    - name: Проверить результат поиска kubeconfig
+      ansible.builtin.assert:
+        that:
+          - kubeconfig_stat.stat.exists
+          - kubeconfig_stat.stat.isreg
+        fail_msg: "Не найден kubeconfig {{ kubeconfig_path }}."
+
+    - name: Проверить готовность Kubernetes API
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - get
+          - "--raw=/readyz"
+      register: kubernetes_ready
+      changed_when: false
+      failed_when: >-
+        kubernetes_ready.rc != 0 or
+        'ok' not in kubernetes_ready.stdout
+
+    - name: Проверить CRD ServiceMonitor
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - get
+          - crd
+          - servicemonitors.monitoring.coreos.com
+      changed_when: false
+
+    - name: Получить selector ServiceMonitor у Prometheus
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - get
+          - prometheus
+          - kube-prometheus-stack-prometheus
+          - --namespace
+          - monitoring
+          - >-
+            --output=jsonpath={.spec.serviceMonitorSelector.matchLabels.release}
+      register: prometheus_servicemonitor_selector
+      changed_when: false
+
+    - name: Проверить selector ServiceMonitor
+      ansible.builtin.assert:
+        that:
+          - >-
+            prometheus_servicemonitor_selector.stdout ==
+            'kube-prometheus-stack'
+        fail_msg: >-
+          Неожиданный selector Prometheus:
+          {{ prometheus_servicemonitor_selector.stdout }}.
+
+    - name: Создать каталог манифестов
+      ansible.builtin.file:
+        path: "{{ remote_manifest_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Скопировать манифесты
+      ansible.builtin.copy:
+        src: "{{ item.source }}"
+        dest: "{{ item.remote }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop: "{{ manifest_files }}"
+      loop_control:
+        label: "{{ item.remote }}"
+
+    - name: Проверить манифесты на Kubernetes API
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - apply
+          - --dry-run=server
+          - "--filename={{ item.remote }}"
+      loop: "{{ manifest_files }}"
+      loop_control:
+        label: "{{ item.remote }}"
+      changed_when: false
+
+    - name: Применить манифесты
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - apply
+          - "--filename={{ item.remote }}"
+      loop: "{{ manifest_files }}"
+      loop_control:
+        label: "{{ item.remote }}"
+      register: manifest_apply
+      changed_when: >-
+        'created' in manifest_apply.stdout or
+        'configured' in manifest_apply.stdout
+
+    - name: Дождаться завершения rolling update
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - rollout
+          - status
+          - deployment/infra
+          - --namespace
+          - default
+          - --timeout=300s
+      changed_when: false
+
+    - name: Получить состояние Deployment
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - get
+          - deployment
+          - infra
+          - --namespace
+          - default
+          - >-
+            --output=jsonpath={.status.readyReplicas}{" "}{.status.updatedReplicas}{" "}{.status.availableReplicas}
+      register: deployment_replicas
+      changed_when: false
+
+    - name: Проверить три готовые реплики
+      ansible.builtin.assert:
+        that:
+          - deployment_replicas.stdout.split() == ['3', '3', '3']
+        fail_msg: >-
+          Ожидалось ready/updated/available 3/3/3, получено:
+          {{ deployment_replicas.stdout }}.
+
+    - name: Получить образ Deployment
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - get
+          - deployment
+          - infra
+          - --namespace
+          - default
+          - >-
+            --output=jsonpath={.spec.template.spec.containers[?(@.name=="infra")].image}
+      register: deployment_image
+      changed_when: false
+
+    - name: Проверить образ Deployment
+      ansible.builtin.assert:
+        that:
+          - deployment_image.stdout == infra_image_reference
+        fail_msg: >-
+          Deployment использует {{ deployment_image.stdout }},
+          ожидался {{ infra_image_reference }}.
+
+    - name: Проверить health приложения через ClusterIP
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - get
+          - >-
+            --raw=/api/v1/namespaces/default/services/http:infra:8080/proxy/api/health
+      register: internal_application_health
+      changed_when: false
+      retries: 12
+      delay: 5
+      until: >-
+        internal_application_health.rc == 0 and
+        '"status":"ok"' in internal_application_health.stdout
+
+    - name: Проверить внутренний endpoint метрик
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - get
+          - >-
+            --raw=/api/v1/namespaces/default/services/http:infra:9090/proxy/metrics
+      register: internal_application_metrics
+      changed_when: false
+      retries: 12
+      delay: 5
+      until: >-
+        internal_application_metrics.rc == 0 and
+        'infra_app_info' in internal_application_metrics.stdout and
+        'go_goroutines' in internal_application_metrics.stdout
+
+    - name: Дождаться трёх healthy targets в Prometheus
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - get
+          - >-
+            --raw=/api/v1/namespaces/monitoring/services/http:kube-prometheus-stack-prometheus:9090/proxy/api/v1/query?query=count%28up%7Bjob%3D%22infra%22%7D%20%3D%3D%201%29
+      register: infra_prometheus_query
+      changed_when: false
+      retries: 18
+      delay: 5
+      until: >-
+        infra_prometheus_query.rc == 0 and
+        '"3"' in infra_prometheus_query.stdout
+
+    - name: Разобрать ответ Prometheus
+      ansible.builtin.set_fact:
+        infra_prometheus_response: >-
+          {{ infra_prometheus_query.stdout | from_json }}
+
+    - name: Проверить количество healthy targets
+      ansible.builtin.assert:
+        that:
+          - infra_prometheus_response.status == 'success'
+          - infra_prometheus_response.data.result | length == 1
+          - >-
+            (infra_prometheus_response.data.result[0].value[1] | int) == 3
+        fail_msg: >-
+          Prometheus не подтвердил три healthy target:
+          {{ infra_prometheus_query.stdout }}.
+
+    - name: Получить итоговое состояние приложения
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - get
+          - deployment,pods,service,pdb
+          - --namespace
+          - default
+          - --selector
+          - app=infra
+          - --output=wide
+      register: infra_resources
+      changed_when: false
+
+    - name: Получить состояние ServiceMonitor
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_binary }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - get
+          - servicemonitor
+          - infra
+          - --namespace
+          - monitoring
+          - --output=wide
+      register: infra_servicemonitor
+      changed_when: false
+
+    - name: Показать ресурсы приложения
+      ansible.builtin.debug:
+        var: infra_resources.stdout_lines
+
+    - name: Показать ServiceMonitor
+      ansible.builtin.debug:
+        var: infra_servicemonitor.stdout_lines
+
+    - name: Показать ответ Prometheus
+      ansible.builtin.debug:
+        var: infra_prometheus_query.stdout
+EOF
+
+    printf 'Создан playbook:\n%s\n' "$PLAYBOOK_FILE"
+
+    printf '\n===== 5. ПРОВЕРКА СИНТАКСИСА =====\n'
+
+    cd "$ANSIBLE_DIR"
+
+    ansible-playbook \
+        --inventory inventory/hosts.yaml \
+        --syntax-check \
+        "$PLAYBOOK_FILE" \
+        --extra-vars "infra_image_reference=$IMAGE_REF" \
+        --extra-vars "infra_image_archive=$IMAGE_ARCHIVE"
+
+    SYNTAX_RC=$?
+
+    printf 'Код syntax-check: %s\n' "$SYNTAX_RC"
+
+    if [[ "$SYNTAX_RC" -eq 0 ]]; then
+
+        printf '\n===== 6. ИМПОРТ ОБРАЗА И ROLLING UPDATE =====\n'
+
+        ansible-playbook \
+            --inventory inventory/hosts.yaml \
+            "$PLAYBOOK_FILE" \
+            --extra-vars "infra_image_reference=$IMAGE_REF" \
+            --extra-vars "infra_image_archive=$IMAGE_ARCHIVE"
+
+        PLAYBOOK_RC=$?
+
+        printf 'Код playbook: %s\n' "$PLAYBOOK_RC"
+
+        if [[ "$PLAYBOOK_RC" -eq 0 ]]; then
+
+            printf '\n===== 7. ПОЛУЧЕНИЕ ПУБЛИЧНЫХ URL =====\n'
+
+            cd "$TERRAFORM_DIR"
+
+            terraform output -raw application_url > "$APPLICATION_URL_FILE"
+            APPLICATION_OUTPUT_RC=$?
+
+            terraform output -raw grafana_url > "$GRAFANA_URL_FILE"
+            GRAFANA_OUTPUT_RC=$?
+
+            read -r APPLICATION_URL < "$APPLICATION_URL_FILE"
+            read -r GRAFANA_URL < "$GRAFANA_URL_FILE"
+
+            printf 'Application URL: %s\n' "$APPLICATION_URL"
+            printf 'Grafana URL: %s\n' "$GRAFANA_URL"
+            printf 'Код application output: %s\n' "$APPLICATION_OUTPUT_RC"
+            printf 'Код Grafana output: %s\n' "$GRAFANA_OUTPUT_RC"
+
+            printf '\n===== 8. ПУБЛИЧНАЯ ПРОВЕРКА ПРИЛОЖЕНИЯ =====\n'
+
+            APPLICATION_ROOT_STATUS="$(curl \
+                --silent \
+                --show-error \
+                --output /dev/null \
+                --write-out '%{http_code}' \
+                "$APPLICATION_URL")"
+
+            APPLICATION_HEALTH_STATUS="$(curl \
+                --silent \
+                --show-error \
+                --output "$PUBLIC_HEALTH_FILE" \
+                --write-out '%{http_code}' \
+                "${APPLICATION_URL}api/health")"
+
+            printf 'Application root HTTP: %s\n' "$APPLICATION_ROOT_STATUS"
+            printf 'Application health HTTP: %s\n' "$APPLICATION_HEALTH_STATUS"
+
+            cat "$PUBLIC_HEALTH_FILE"
+
+            printf '\n===== 9. ПРОВЕРКА ЗАКРЫТОСТИ МЕТРИК СНАРУЖИ =====\n'
+
+            PUBLIC_METRICS_STATUS="$(curl \
+                --silent \
+                --show-error \
+                --output /dev/null \
+                --write-out '%{http_code}' \
+                "${APPLICATION_URL}metrics")"
+
+            printf 'Публичный /metrics HTTP: %s\n' "$PUBLIC_METRICS_STATUS"
+            printf 'Ожидаемый статус: 404\n'
+
+            printf '\n===== 10. ПОВТОРНАЯ ПРОВЕРКА GRAFANA =====\n'
+
+            GRAFANA_HEALTH_STATUS="$(curl \
+                --silent \
+                --show-error \
+                --output "$GRAFANA_HEALTH_FILE" \
+                --write-out '%{http_code}' \
+                "${GRAFANA_URL}api/health")"
+
+            printf 'Grafana API health HTTP: %s\n' "$GRAFANA_HEALTH_STATUS"
+            cat "$GRAFANA_HEALTH_FILE"
+
+            printf '\n===== 11. ИТОГОВЫЕ ПРОВЕРКИ =====\n'
+
+            RESULT_READY=1
+
+            if [[ "$APPLICATION_ROOT_STATUS" != "200" ]]; then
+                printf 'ОШИБКА: главная страница приложения вернула %s.\n' \
+                    "$APPLICATION_ROOT_STATUS"
+                RESULT_READY=0
+            fi
+
+            if [[ "$APPLICATION_HEALTH_STATUS" != "200" ]]; then
+                printf 'ОШИБКА: health приложения вернул %s.\n' \
+                    "$APPLICATION_HEALTH_STATUS"
+                RESULT_READY=0
+            fi
+
+            if [[ "$PUBLIC_METRICS_STATUS" != "404" ]]; then
+                printf 'ОШИБКА: /metrics доступен публично со статусом %s.\n' \
+                    "$PUBLIC_METRICS_STATUS"
+                RESULT_READY=0
+            fi
+
+            if [[ "$GRAFANA_HEALTH_STATUS" != "200" ]]; then
+                printf 'ОШИБКА: Grafana health вернул %s.\n' \
+                    "$GRAFANA_HEALTH_STATUS"
+                RESULT_READY=0
+            fi
+
+            printf 'Итоговая готовность: %s\n' "$RESULT_READY"
+
+            printf '\n===== 12. GIT STATUS =====\n'
+
+            cd "$PROJECT_DIR"
+            git status --short
+
+            printf '\n===== 13. РЕЗУЛЬТАТ =====\n'
+            printf 'Образ на worker-узлах: %s\n' "$IMAGE_REF"
+            printf 'Приложение: %s\n' "$APPLICATION_URL"
+            printf 'Grafana: %s\n' "$GRAFANA_URL"
+            printf 'ServiceMonitor: monitoring/infra\n'
+            printf 'Prometheus targets приложения: 3/3 healthy\n'
+            printf 'PDB приложения: minAvailable=2\n'
+            printf 'Terraform apply не выполнялся.\n'
+            printf 'Yandex ALB не изменялся.\n'
+            printf 'README не изменялся этим блоком.\n'
+            printf 'Файлы и ресурсы не удалялись.\n'
+            printf 'Переменные терминала не очищались.\n'
+            printf 'Текущий каталог:\n'
+            pwd
+        fi
+    fi
+fi
+```
+
+Выполнение интеграции приложения в мониторинг:
+![alt text](image-141.png)
+![alt text](image-142.png)
+![alt text](image-143.png)
+![alt text](image-144.png)
+![alt text](image-145.png)
+![alt text](image-146.png)
+![alt text](image-147.png)
+![alt text](image-148.png)
+
+
+Сделано:
+Добавлен /metrics endpoint в приложение на порту 9090
+Собран Docker образ с метриками: infra:metrics-08cef18cf320
+Образ загружен на все worker-узлы через containerd
+Обновлен Deployment с новым образом
+Создан Service с портом 9090 для метрик
+Создан ServiceMonitor для сбора метрик в Prometheus
+Создан PodDisruptionBudget для обеспечения доступности (minAvailable=2)
+Проверена доступность — 3/3 targets healthy
 
 

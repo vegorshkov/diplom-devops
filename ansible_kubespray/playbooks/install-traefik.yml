@@ -1,0 +1,221 @@
+---
+- name: Установка и обновление Traefik Ingress Controller
+  hosts: kube_control_plane
+  gather_facts: false
+  become: true
+
+  vars:
+    helm_binary: /usr/local/bin/helm
+    kubectl_binary: kubectl
+    kubeconfig_path: /etc/kubernetes/admin.conf
+
+    traefik_namespace: traefik
+    traefik_release: traefik
+    traefik_chart: traefik/traefik
+    traefik_chart_version: "41.2.0"
+    traefik_node_port: 30080
+
+    traefik_control_plane: "{{ groups['kube_control_plane'][0] }}"
+    traefik_values_source: "{{ playbook_dir }}/traefik-values.yml"
+    traefik_values_remote: /etc/kubernetes/traefik-values.yml
+
+    infra_ingress_source: >-
+      {{ playbook_dir }}/../../k8s_configs/ingress/infra-traefik.yaml
+    infra_ingress_remote: /etc/kubernetes/infra-traefik-ingress.yaml
+
+  tasks:
+    - name: Выполнить настройку с первого control-plane узла
+      run_once: true
+      delegate_to: "{{ traefik_control_plane }}"
+
+      block:
+        - name: Проверить готовность Kubernetes API
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - "--raw=/readyz"
+          register: kubernetes_api_health
+          changed_when: false
+          failed_when: >-
+            kubernetes_api_health.rc != 0 or
+            'ok' not in kubernetes_api_health.stdout
+
+        - name: Добавить или обновить репозиторий Traefik
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - repo
+              - add
+              - traefik
+              - https://traefik.github.io/charts
+              - --force-update
+          changed_when: false
+
+        - name: Обновить индекс Helm
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - repo
+              - update
+          changed_when: false
+
+        - name: Проверить Helm chart Traefik
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - show
+              - chart
+              - "{{ traefik_chart }}"
+              - --version
+              - "{{ traefik_chart_version }}"
+          changed_when: false
+
+        - name: Скопировать values Traefik
+          ansible.builtin.copy:
+            src: "{{ traefik_values_source }}"
+            dest: "{{ traefik_values_remote }}"
+            owner: root
+            group: root
+            mode: "0644"
+
+        - name: Проверить рендеринг Helm chart
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - template
+              - "{{ traefik_release }}"
+              - "{{ traefik_chart }}"
+              - --namespace
+              - "{{ traefik_namespace }}"
+              - --version
+              - "{{ traefik_chart_version }}"
+              - --values
+              - "{{ traefik_values_remote }}"
+              - --skip-crds
+          changed_when: false
+
+        - name: Установить или обновить Traefik
+          ansible.builtin.command:
+            argv:
+              - "{{ helm_binary }}"
+              - upgrade
+              - --install
+              - "{{ traefik_release }}"
+              - "{{ traefik_chart }}"
+              - --namespace
+              - "{{ traefik_namespace }}"
+              - --create-namespace
+              - --version
+              - "{{ traefik_chart_version }}"
+              - --kubeconfig
+              - "{{ kubeconfig_path }}"
+              - --values
+              - "{{ traefik_values_remote }}"
+              - --reset-values
+              - --skip-crds
+              - --atomic
+              - --wait
+              - --timeout
+              - 10m
+              - --history-max
+              - "5"
+          changed_when: true
+
+        - name: Дождаться готовности DaemonSet Traefik
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - rollout
+              - status
+              - daemonset/traefik
+              - --namespace
+              - "{{ traefik_namespace }}"
+              - --timeout=300s
+          changed_when: false
+
+        - name: Скопировать Ingress приложения
+          ansible.builtin.copy:
+            src: "{{ infra_ingress_source }}"
+            dest: "{{ infra_ingress_remote }}"
+            owner: root
+            group: root
+            mode: "0644"
+
+        - name: Применить Ingress приложения
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - apply
+              - --filename
+              - "{{ infra_ingress_remote }}"
+          register: infra_ingress_apply
+          changed_when: >-
+            'created' in infra_ingress_apply.stdout or
+            'configured' in infra_ingress_apply.stdout
+
+        - name: Получить внутренние IP worker-узлов
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - nodes
+              - "--selector=!node-role.kubernetes.io/control-plane"
+              - >-
+                --output=jsonpath={range .items[*]}{.status.addresses[?(@.type=="InternalIP")].address}{"\n"}{end}
+          register: worker_internal_ips
+          changed_when: false
+
+        - name: Проверить количество worker-узлов
+          ansible.builtin.assert:
+            that:
+              - worker_internal_ips.stdout_lines | length == groups['kube_node'] | length
+            fail_msg: >-
+              Количество обнаруженных worker IP не совпало с inventory:
+              {{ worker_internal_ips.stdout_lines }}.
+
+        - name: Проверить Traefik /ping на каждом worker
+          ansible.builtin.uri:
+            url: "http://{{ item }}:{{ traefik_node_port }}/ping"
+            status_code: 200
+            return_content: true
+            use_proxy: false
+          loop: "{{ worker_internal_ips.stdout_lines }}"
+          changed_when: false
+
+        - name: Получить состояние DaemonSet и Service
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - daemonset,service
+              - --namespace
+              - "{{ traefik_namespace }}"
+              - --output=wide
+          register: traefik_status
+          changed_when: false
+
+        - name: Получить состояние Ingress
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - get
+              - ingress
+              - --all-namespaces
+              - --output=wide
+          register: ingress_status
+          changed_when: false
+
+        - name: Показать состояние Traefik
+          ansible.builtin.debug:
+            var: traefik_status.stdout_lines
+
+        - name: Показать состояние Ingress
+          ansible.builtin.debug:
+            var: ingress_status.stdout_lines

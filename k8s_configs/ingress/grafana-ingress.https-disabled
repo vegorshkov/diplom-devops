@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: monitoring
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    # Если используешь Traefik с middleware для редиректа
+    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    # Для сквозной маршрутизации (если нужно)
+    # traefik.ingress.kubernetes.io/router.middlewares: "monitoring-redirect-https@kubernetescrd"
+spec:
+  rules:
+    - host: "grafana.your-domain.ru"  # Замени на свой домен
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kube-prometheus-stack-grafana
+                port:
+                  number: 80
+  # TLS не указываем — он на ALB!
+  # Сертификат уже есть на балансировщике
+

@@ -371,3 +371,7 @@ kubeadm_patches: []
 
 # Set to true to remove the role binding to anonymous users created by kubeadm
 remove_anonymous_access: false
+
+# Expose kube-proxy metrics to Prometheus inside the cluster
+kube_proxy_metrics_bind_address: "0.0.0.0:10249"
+

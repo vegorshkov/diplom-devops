@@ -219,6 +219,19 @@
           register: helm_result
           changed_when: true
 
+        - name: Перезапустить Grafana после изменения Secret
+          ansible.builtin.command:
+            argv:
+              - "{{ kubectl_binary }}"
+              - "--kubeconfig={{ kubeconfig_path }}"
+              - rollout
+              - restart
+              - deployment/kube-prometheus-stack-grafana
+              - --namespace
+              - "{{ monitoring_namespace }}"
+          when: grafana_secret_apply.changed
+          changed_when: true
+
         - name: Дождаться готовности StatefulSet Prometheus
           ansible.builtin.command:
             argv:

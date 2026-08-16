@@ -1,0 +1,81 @@
+---
+deployment:
+  kind: DaemonSet
+  healthchecksPort: 8000
+  minReadySeconds: 5
+  terminationGracePeriodSeconds: 30
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 0
+
+ingressClass:
+  enabled: true
+  isDefaultClass: false
+  name: traefik
+
+providers:
+  kubernetesCRD:
+    enabled: false
+
+  kubernetesIngress:
+    enabled: true
+    ingressClass: traefik
+    publishedService:
+      enabled: false
+
+  kubernetesGateway:
+    enabled: false
+
+gateway:
+  enabled: false
+
+api:
+  dashboard: false
+
+additionalArguments:
+  - "--ping.entrypoint=web"
+
+ports:
+  web:
+    asDefault: true
+    port: 8000
+    expose:
+      default: true
+    exposedPort: 80
+    nodePort: 30080
+    forwardedHeaders:
+      trustedIPs:
+        - 172.16.0.0/16
+      insecure: false
+
+  websecure:
+    expose:
+      default: false
+
+service:
+  enabled: true
+  spec:
+    type: NodePort
+    externalTrafficPolicy: Local
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: DoesNotExist
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 300m
+    memory: 256Mi
+
+accessLog:
+  enabled: true

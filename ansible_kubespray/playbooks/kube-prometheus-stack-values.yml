@@ -31,6 +31,11 @@ alertmanager:
     storage: {}
 
 grafana:
+  grafana.ini:
+    server:
+      root_url: "http://51.250.75.1/grafana/"
+      serve_from_sub_path: true
+
   admin:
     existingSecret: grafana-admin-credentials
     userKey: admin-user
