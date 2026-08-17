@@ -77,9 +77,24 @@ resource "yandex_vpc_security_group" "gitlab_sg" {
   description = "Security group for GitLab"
 
   ingress {
-    protocol       = "ANY"
-    description    = "Traffic from internal network"
-    v4_cidr_blocks = var.internal_network_cidrs
+    protocol       = "TCP"
+    description    = "HTTP from ALB and internal network"
+    port           = 80
+    v4_cidr_blocks = ["172.16.0.0/16", "10.0.0.0/8", "84.252.128.0/18"]
+  }
+
+  ingress {
+    protocol       = "TCP"
+    description    = "SSH from internal network"
+    port           = 22
+    v4_cidr_blocks = ["172.16.0.0/16"]
+  }
+
+  ingress {
+    protocol       = "TCP"
+    description    = "HTTPS from ALB and internal network"
+    port           = 443
+    v4_cidr_blocks = ["172.16.0.0/16", "10.0.0.0/8", "84.252.128.0/18"]
   }
 
   egress {
@@ -125,6 +140,12 @@ resource "yandex_compute_instance" "nat_instance" {
   }
 
   allow_stopping_for_update = true
+
+  lifecycle {
+    ignore_changes = [
+      boot_disk[0].initialize_params[0].image_id,
+    ]
+  }
 }
 
 resource "yandex_compute_instance" "k8s_master" {
@@ -164,6 +185,12 @@ resource "yandex_compute_instance" "k8s_master" {
   }
 
   allow_stopping_for_update = true
+
+  lifecycle {
+    ignore_changes = [
+      boot_disk[0].initialize_params[0].image_id,
+    ]
+  }
 }
 
 resource "yandex_compute_instance" "k8s_worker" {
@@ -203,6 +230,12 @@ resource "yandex_compute_instance" "k8s_worker" {
   }
 
   allow_stopping_for_update = true
+
+  lifecycle {
+    ignore_changes = [
+      boot_disk[0].initialize_params[0].image_id,
+    ]
+  }
 }
 
 resource "yandex_compute_instance" "gitlab" {
@@ -214,7 +247,7 @@ resource "yandex_compute_instance" "gitlab" {
   resources {
     cores         = 4
     memory        = 8
-    core_fraction = 100
+    core_fraction = 50
   }
 
   boot_disk {
@@ -241,5 +274,10 @@ resource "yandex_compute_instance" "gitlab" {
   }
 
   allow_stopping_for_update = true
-}
 
+  lifecycle {
+    ignore_changes = [
+      boot_disk[0].initialize_params[0].image_id,
+    ]
+  }
+}

@@ -1,0 +1,164 @@
+---
+- name: Install and configure GitLab CE
+  hosts: gitlab
+  become: true
+  gather_facts: true
+
+  vars:
+    gitlab_external_url: "http://51.250.75.1/gitlab"
+    gitlab_repository_script: "/tmp/gitlab-ce-repository.sh"
+    gitlab_initial_password_local_file: "{{ playbook_dir }}/secrets/initial_root_password"
+
+  handlers:
+    - name: Reconfigure GitLab
+      ansible.builtin.command:
+        argv:
+          - gitlab-ctl
+          - reconfigure
+      changed_when: true
+
+  tasks:
+    - name: Verify supported operating system
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == "Ubuntu"
+          - ansible_distribution_version is version("22.04", ">=")
+        fail_msg: "Для этого playbook требуется Ubuntu 22.04 или новее."
+        success_msg: "Поддерживаемая версия Ubuntu подтверждена."
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install GitLab dependencies
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - openssh-server
+          - perl
+          - locales
+          - tzdata
+        state: present
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Enable SSH service
+      ansible.builtin.systemd:
+        name: ssh
+        enabled: true
+        state: started
+
+    - name: Download official GitLab CE repository script
+      ansible.builtin.get_url:
+        url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh
+        dest: "{{ gitlab_repository_script }}"
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Add official GitLab CE repository
+      ansible.builtin.command:
+        argv:
+          - "{{ gitlab_repository_script }}"
+      args:
+        creates: /etc/apt/sources.list.d/gitlab_gitlab-ce.list
+
+    - name: Update apt cache after adding GitLab repository
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install GitLab CE package
+      ansible.builtin.apt:
+        name: gitlab-ce
+        state: present
+      environment:
+        EXTERNAL_URL: "{{ gitlab_external_url }}"
+        DEBIAN_FRONTEND: noninteractive
+      register: gitlab_package_install
+
+    - name: Configure GitLab external URL
+      ansible.builtin.lineinfile:
+        path: /etc/gitlab/gitlab.rb
+        regexp: '^external_url\s+'
+        line: "external_url '{{ gitlab_external_url }}'"
+        owner: root
+        group: root
+        mode: "0600"
+      notify: Reconfigure GitLab
+
+    - name: Apply pending GitLab configuration
+      ansible.builtin.meta: flush_handlers
+
+    - name: Wait for GitLab readiness endpoint
+      ansible.builtin.uri:
+        url: http://127.0.0.1/gitlab/users/sign_in
+        method: GET
+        status_code: 200
+        return_content: false
+      register: gitlab_readiness
+      retries: 90
+      delay: 10
+      until: gitlab_readiness.status == 200
+
+    - name: Check GitLab services
+      ansible.builtin.command:
+        argv:
+          - gitlab-ctl
+          - status
+      register: gitlab_service_status
+      changed_when: false
+
+    - name: Read installed GitLab version
+      ansible.builtin.command:
+        argv:
+          - dpkg-query
+          - -W
+          - '-f=${Version}'
+          - gitlab-ce
+      register: gitlab_version
+      changed_when: false
+
+    - name: Check initial root password file
+      ansible.builtin.stat:
+        path: /etc/gitlab/initial_root_password
+      register: gitlab_initial_password
+
+    - name: Create local secrets directory
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/secrets"
+        state: directory
+        mode: "0700"
+      delegate_to: localhost
+      become: false
+      run_once: true
+
+    - name: Download initial root password without displaying it
+      ansible.builtin.fetch:
+        src: /etc/gitlab/initial_root_password
+        dest: "{{ gitlab_initial_password_local_file }}"
+        flat: true
+      when: gitlab_initial_password.stat.exists
+      no_log: true
+
+    - name: Protect downloaded password file
+      ansible.builtin.file:
+        path: "{{ gitlab_initial_password_local_file }}"
+        mode: "0600"
+      delegate_to: localhost
+      become: false
+      when: gitlab_initial_password.stat.exists
+      no_log: true
+
+    - name: Show GitLab installation result
+      ansible.builtin.debug:
+        msg:
+          - "GitLab CE version: {{ gitlab_version.stdout }}"
+          - "Internal URL: {{ gitlab_external_url }}"
+          - "Initial password copied securely: {{ gitlab_initial_password.stat.exists }}"
+          - "Password value was not displayed."
+
+    - name: Show GitLab service status
+      ansible.builtin.debug:
+        var: gitlab_service_status.stdout_lines

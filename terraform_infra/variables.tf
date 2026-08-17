@@ -123,13 +123,13 @@ variable "ssh_public_key_path" {
 variable "gitlab_zone" {
   type        = string
   description = "Зона размещения GitLab"
-  default     = "ru-central1-b"
+  default     = "ru-central1-a"
 }
 
 variable "gitlab_internal_ip" {
   type        = string
   description = "Статический внутренний IP-адрес GitLab"
-  default     = "172.16.2.100"
+  default     = "172.16.1.100"
 }
 
 variable "internal_network_cidrs" {
@@ -143,4 +143,3 @@ variable "ssh_ingress_cidrs" {
   description = "CIDR-блоки, которым разрешён SSH-доступ к NAT-инстансу"
   default     = ["0.0.0.0/0"]
 }
-

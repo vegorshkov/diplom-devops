@@ -1825,4 +1825,35 @@ fi
 Создан PodDisruptionBudget для обеспечения доступности (minAvailable=2)
 Проверена доступность — 3/3 targets healthy
 
+http://51.250.75.1/
+![Приложение](image-149.png)
+
+Произведем переконфигурирование VM Гитлаб, перенесу ее в сегмент A  для верной маршрутизации в облаке Яндекс провайдера, чтобы не образовывалось сетевой петли при прохождении пакетов через nat-instance.
+Переконфигурация выполнена через Терраформ, в текущем коммите.
+
+Гитлаб. Установка и конфигурирование.
+![alt text](image-150.png)
+![alt text](image-151.png)
+![alt text](image-152.png)
+
+Получен пароль, пересохранен. 
+![alt text](image-153.png)
+
+Выполним пересоздание пароля, сброс.
+![alt text](image-154.png)
+
+Публикация GitLab:
+![alt text](image-156.png)
+![alt text](image-155.png)
+
+Проверяем доступность gitlab:
+![alt text](image-157.png)
+
+![alt text](image-158.png)
+![alt text](image-159.png)
+![alt text](image-160.png)
+![alt text](image-161.png)
+
+http://51.250.75.1/gitlab/diplom/diplom-devops
+
 

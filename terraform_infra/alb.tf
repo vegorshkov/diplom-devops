@@ -36,6 +36,13 @@ resource "yandex_vpc_security_group" "alb_sg" {
     port           = var.traefik_node_port
     v4_cidr_blocks = var.internal_network_cidrs
   }
+
+  egress {
+    protocol       = "TCP"
+    description    = "HTTP traffic to GitLab"
+    port           = 80
+    v4_cidr_blocks = var.internal_network_cidrs
+  }
 }
 
 resource "yandex_alb_target_group" "k8s_workers" {
@@ -79,6 +86,43 @@ resource "yandex_alb_backend_group" "traefik" {
   }
 }
 
+resource "yandex_alb_target_group" "gitlab" {
+  name        = "diplom-gitlab-target"
+  description = "GitLab VM target"
+
+  target {
+    ip_address = "172.16.1.100"
+    subnet_id  = yandex_vpc_subnet.k8s_subnet["ru-central1-a"].id
+  }
+}
+
+resource "yandex_alb_backend_group" "gitlab" {
+  name        = "diplom-gitlab-backend"
+  description = "GitLab HTTP backend"
+
+  http_backend {
+    name             = "gitlab-http"
+    weight           = 1
+    port             = 80
+    target_group_ids = [yandex_alb_target_group.gitlab.id]
+
+    load_balancing_config {
+      mode = "ROUND_ROBIN"
+    }
+
+    healthcheck {
+      timeout             = "2s"
+      interval            = "5s"
+      healthy_threshold   = 2
+      unhealthy_threshold = 2
+
+      http_healthcheck {
+        path = "/gitlab/users/sign_in"
+      }
+    }
+  }
+}
+
 resource "yandex_alb_http_router" "ingress" {
   name        = "diplom-ingress-router"
   description = "HTTP router for application and monitoring"
@@ -87,6 +131,24 @@ resource "yandex_alb_http_router" "ingress" {
 resource "yandex_alb_virtual_host" "ingress" {
   name           = "diplom-ingress-vhost"
   http_router_id = yandex_alb_http_router.ingress.id
+
+  route {
+    name = "gitlab-route"
+
+    http_route {
+      http_match {
+        path {
+          prefix = "/gitlab"
+        }
+      }
+
+      http_route_action {
+        backend_group_id = yandex_alb_backend_group.gitlab.id
+        timeout          = "60s"
+        idle_timeout     = "300s"
+      }
+    }
+  }
 
   route {
     name = "traefik-route"
