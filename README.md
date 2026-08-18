@@ -1857,3 +1857,76 @@ http://51.250.75.1/
 http://51.250.75.1/gitlab/diplom/diplom-devops
 
 
+
+### Установка GitLab Runner и настройка CI/CD для сборки образа и деплоя приложения в Kubernetes.
+
+![alt text](image-162.png)
+
+![alt text](image-163.png)
+
+## Сохраняем Runner Token в Ansible Vault
+
+Создаём отдельный зашифрованный файл. Используйте тот же Vault-пароль, что и для мониторинга.
+
+![alt text](image-164.png)
+
+![alt text](image-165.png)
+
+Чарт 0.91.2 фиксируем явно: он устанавливает Runner 19.2.2, совместимый с GitLab 19.2.4. Токена в values.yml не будет — чарт получит его из Kubernetes Secret, который создаст Ansible из Vault. Это соответствует официальной схеме GitLab Runner Helm chart (https://docs.gitlab.com/runner/install/kubernetes/?utm_source=chatgpt.com).
+
+## Создаём Helm values для Runner
+
+![Проверка](image-166.png)
+
+# Создаём Ansible playbook
+
+Playbook создаёт namespace и Secret, затем устанавливает чарт 0.91.2. 
+Токен передаётся kubectl через stdin, не попадая в аргументы процесса.
+
+![alt text](image-167.png)
+
+![alt text](image-168.png)
+
+![alt text](image-169.png)
+
+![alt text](image-170.png)
+
+Проверяю обновлённый Runner и находим SSH-ключ: убеждаемся, что новый Pod готов и предупреждение long polling отсутствует, далее определяем существующий SSH-ключ для добавления в GitLab.
+
+```
+ssh k8s-master-ru-central1-a 'sudo /usr/local/bin/kubectl --kubeconfig=/etc/kubernetes/admin.conf rollout status deployment/gitlab-runner --namespace gitlab-runner --timeout=120s'
+
+ssh k8s-master-ru-central1-a 'sudo /usr/local/bin/kubectl --kubeconfig=/etc/kubernetes/admin.conf logs deployment/gitlab-runner --namespace gitlab-runner --tail=60 | grep -E "Configuration loaded|Long polling|request_concurrency|Metrics server|Initializing executor"'
+
+ssh -G gitlab-server | awk '/^hostname |^user |^identityfile / {print}'
+
+find /home/vgorshkov/.ssh -maxdepth 1 -type f -name '*.pub' -printf '%p\n'
+```
+
+Добавляем существующий ключ в GitLab
+
+![alt text](image-171.png)
+
+![alt text](image-172.png)
+
+![alt text](image-173.png)
+
+Проверено из консоли подключение по ключу
+![alt text](image-174.png)
+
+Прописано и проверено подключение Git Remote
+![alt text](image-175.png)
+
+![alt text](image-176.png)
+
+Создал, проверяем YAML
+![alt text](image-177.png) 
+
+Pipelines
+![alt text](image-178.png)
+
+Выполнили Push и на GitHub и на GitLab
+![alt text](image-179.png)
+
+
+
