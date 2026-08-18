@@ -1936,3 +1936,11 @@ Pipelines
 
 
 ![alt text](image-182.png)
+
+Добавлен Дашборд монитринга приложения
+
+![alt text](image-183.png)
+
+http://51.250.75.1/grafana/d/infra-application-overview/infra-application-overview?orgId=1&from=now-1h&to=now&timezone=browser&var-datasource=prometheus&refresh=10s
+
+
