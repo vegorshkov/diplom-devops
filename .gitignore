@@ -103,3 +103,5 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# GITLAB
+/ansible_gitlab/group_vars/vault-gitlab-runner.yml

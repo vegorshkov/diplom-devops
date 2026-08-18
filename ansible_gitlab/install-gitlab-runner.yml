@@ -1,0 +1,123 @@
+---
+- name: Install GitLab Runner in Kubernetes
+  hosts: k8s-master-ru-central1-a
+  gather_facts: false
+  become: true
+
+  vars_files:
+    - "{{ playbook_dir }}/group_vars/vault-gitlab-runner.yml"
+
+  vars:
+    kubectl_path: /usr/local/bin/kubectl
+    helm_path: /usr/local/bin/helm
+    kubeconfig_path: /etc/kubernetes/admin.conf
+    runner_namespace: gitlab-runner
+    runner_secret_name: gitlab-runner-auth
+    runner_chart_version: "0.91.2"
+    runner_values_remote: /tmp/gitlab-runner-values.yml
+
+  tasks:
+    - name: Validate Runner token
+      ansible.builtin.assert:
+        that:
+          - vault_gitlab_runner_token is defined
+          - vault_gitlab_runner_token | length > 10
+          - vault_gitlab_runner_token is match('^glrt-')
+        fail_msg: GitLab Runner token is missing or has an invalid format
+      no_log: true
+
+    - name: Check Kubernetes API
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_path }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - get
+          - --raw=/readyz
+      changed_when: false
+
+    - name: Check Runner namespace
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_path }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - get
+          - namespace
+          - "{{ runner_namespace }}"
+      register: runner_namespace_check
+      changed_when: false
+      failed_when: false
+
+    - name: Create Runner namespace
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_path }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - create
+          - namespace
+          - "{{ runner_namespace }}"
+      when: runner_namespace_check.rc != 0
+
+    - name: Create or update Runner authentication Secret
+      ansible.builtin.command:
+        argv:
+          - "{{ kubectl_path }}"
+          - "--kubeconfig={{ kubeconfig_path }}"
+          - apply
+          - -f
+          - "-"
+        stdin: |
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: {{ runner_secret_name }}
+            namespace: {{ runner_namespace }}
+          type: Opaque
+          stringData:
+            runner-token: {{ vault_gitlab_runner_token | to_json }}
+            runner-registration-token: ""
+      register: runner_secret_apply
+      changed_when: "'unchanged' not in runner_secret_apply.stdout"
+      no_log: true
+
+    - name: Copy GitLab Runner values
+      ansible.builtin.copy:
+        src: files/gitlab-runner-values.yml
+        dest: "{{ runner_values_remote }}"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Configure GitLab Helm repository
+      ansible.builtin.command:
+        argv:
+          - "{{ helm_path }}"
+          - repo
+          - add
+          - gitlab
+          - https://charts.gitlab.io
+          - --force-update
+      changed_when: false
+
+    - name: Install or upgrade GitLab Runner
+      ansible.builtin.command:
+        argv:
+          - "{{ helm_path }}"
+          - upgrade
+          - --install
+          - gitlab-runner
+          - gitlab/gitlab-runner
+          - --namespace
+          - "{{ runner_namespace }}"
+          - --version
+          - "{{ runner_chart_version }}"
+          - --values
+          - "{{ runner_values_remote }}"
+          - --kubeconfig
+          - "{{ kubeconfig_path }}"
+          - --wait
+          - --timeout
+          - 10m
+          - --history-max
+          - "5"
+      register: runner_helm_result
+      changed_when: true

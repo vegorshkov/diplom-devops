@@ -1,0 +1,21 @@
+---
+stages:
+  - test
+
+runner-smoke:
+  stage: test
+  image: alpine:3.22
+  tags:
+    - kubernetes
+  variables:
+    GIT_STRATEGY: clone
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  script:
+    - echo "GitLab Kubernetes Runner is working"
+    - echo "Project=$CI_PROJECT_PATH"
+    - echo "Commit=$CI_COMMIT_SHORT_SHA"
+    - test "$CI_PROJECT_PATH" = "diplom/diplom-devops"
+    - test "$CI_COMMIT_BRANCH" = "main"
+    - uname -a
+    - cat /etc/os-release

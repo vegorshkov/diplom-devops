@@ -1,0 +1,39 @@
+---
+gitlabUrl: "http://172.16.1.100/gitlab/"
+
+concurrent: 2
+checkInterval: 3
+
+rbac:
+  create: true
+  clusterWideAccess: false
+
+serviceAccount:
+  create: true
+  name: gitlab-runner
+
+runners:
+  secret: gitlab-runner-auth
+  config: |
+    [[runners]]
+      request_concurrency = 2
+      [runners.kubernetes]
+        namespace = "gitlab-runner"
+        image = "alpine:3.22"
+        privileged = false
+        poll_timeout = 600
+        cpu_request = "100m"
+        cpu_limit = "1000m"
+        memory_request = "128Mi"
+        memory_limit = "1Gi"
+
+metrics:
+  enabled: true
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
