@@ -1928,5 +1928,10 @@ Pipelines
 Выполнили Push и на GitHub и на GitLab
 ![alt text](image-179.png)
 
+![alt text](image-180.png)
+
+
+Перезагрузка Воркера
+![alt text](image-181.png)
 
 

@@ -85,14 +85,17 @@ function drawCanvas() {
     ctx.fillStyle = '#00d2ff';
     ctx.font = 'bold 13px Segoe UI';
     ctx.textAlign = 'left';
-    ctx.fillText('УЗЛЫ KUBERNETES', 80, 185);
-    ctx.fillText('СЕРВИСЫ', 80, 405);
+    ctx.fillText('УЗЛЫ KUBERNETES', 80, 125);
+    ctx.fillText('СЕРВИСЫ', 80, 415);
 
     // Ноды
-    const nodeWidth = 160, nodeHeight = 100, startX = 80, startY = 200, gap = 30;
+    const nodeWidth = 280, nodeHeight = 100, startX = 80, startY = 140, gapX = 40, gapY = 20;
     nodes.forEach((node, i) => {
-        const x = startX + (nodeWidth + gap) * i, y = startY;
-        const color = statusColors[node.Status] || statusColors.unknown;
+        const column = i % 3;
+        const row = Math.floor(i / 3);
+        const x = startX + (nodeWidth + gapX) * column;
+        const y = startY + (nodeHeight + gapY) * row;
+        const color = statusColors[node.status] || statusColors.unknown;
         ctx.fillStyle = 'rgba(26, 26, 46, 0.9)';
         ctx.strokeStyle = color; ctx.lineWidth = 2;
         roundRect(x, y, nodeWidth, nodeHeight, 12);
@@ -101,22 +104,22 @@ function drawCanvas() {
         ctx.fillStyle = '#888'; ctx.font = '10px Segoe UI';
         ctx.fillText(node.role.toUpperCase(), x + nodeWidth / 2, y + 42);
         ctx.fillStyle = color; ctx.font = 'bold 14px Segoe UI';
-        ctx.fillText(node.Status, x + nodeWidth / 2, y + 65);
+        ctx.fillText(node.status, x + nodeWidth / 2, y + 65);
         ctx.fillStyle = '#aaa'; ctx.font = '10px Segoe UI';
-        ctx.fillText(`CPU: ${node.CPU}% | RAM: ${node.RAM}%`, x + nodeWidth / 2, y + 85);
+        ctx.fillText(`CPU: ${node.cpu}% | RAM: ${node.ram}%`, x + nodeWidth / 2, y + 85);
     });
 
     // Сервисы
     services.forEach((svc, i) => {
         const x = 80 + i * 170, y = 420;
-        const color = statusColors[svc.Status] || statusColors.unknown;
+        const color = statusColors[svc.status] || statusColors.unknown;
         ctx.fillStyle = 'rgba(26, 26, 46, 0.9)';
         ctx.strokeStyle = color; ctx.lineWidth = 2;
         roundRect(x, y, 150, 60, 8);
         ctx.fillStyle = '#e0e0e0'; ctx.font = 'bold 11px Segoe UI'; ctx.textAlign = 'center';
         ctx.fillText(svc.name, x + 75, y + 25);
         ctx.fillStyle = color; ctx.font = '10px Segoe UI';
-        ctx.fillText(svc.Status.toUpperCase(), x + 75, y + 45);
+        ctx.fillText(svc.status.toUpperCase(), x + 75, y + 45);
     });
 }
 
